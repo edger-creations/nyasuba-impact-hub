@@ -15,7 +15,7 @@ const Layout = ({ children, showFooter = true }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar minimal={isAuthPage} />
-      <main className="flex-grow">
+      <main className="flex-grow flex flex-col">
         {children}
       </main>
       {showFooter && <Footer />}

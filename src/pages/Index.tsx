@@ -28,10 +28,10 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative min-h-[650px] w-full hero-pattern overflow-hidden flex flex-col justify-center">
+      {/* Hero Section - Fixed alignment */}
+      <section className="relative min-h-[650px] w-full hero-pattern flex items-center">
         <div className="container px-4 mx-auto z-10 py-16 md:py-24">
-          <div className="max-w-3xl animate-fade-up">
+          <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left animate-fade-up">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Welcome to the Esther Nyasuba Foundation
             </h1>
@@ -47,13 +47,13 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Announcement */}
+        {/* Announcement - Improved positioning */}
         <div className="absolute bottom-10 left-0 right-0 mx-auto w-full max-w-3xl px-4">
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg shadow-md flex items-center gap-3 animate-fade-in">
-            <div className="bg-enf-green/10 dark:bg-enf-light-green/10 p-2 rounded-full">
+            <div className="bg-enf-green/10 dark:bg-enf-light-green/10 p-2 rounded-full flex-shrink-0">
               <MegaphoneIcon className="h-5 w-5 text-enf-green dark:text-enf-light-green" />
             </div>
-            <p className="text-sm font-medium">
+            <p className="text-sm font-medium flex-grow">
               Donate today to support our shelter building initiative for flood victims.
             </p>
           </div>
