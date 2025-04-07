@@ -1,0 +1,131 @@
+
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Layout from "@/components/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
+
+const Login = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      rememberMe: checked,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      await login(formData.email, formData.password);
+      toast.success("Login successful. Welcome back!");
+      navigate("/");
+    } catch (error) {
+      toast.error("Login failed. Please check your credentials and try again.");
+      console.error("Login error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Layout showFooter={false}>
+      <div className="container mx-auto px-4 py-12 flex justify-center">
+        <div className="w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+            <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">Username or Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-xs text-enf-green dark:text-enf-light-green hover:underline"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="rememberMe" 
+                  checked={formData.rememberMe}
+                  onCheckedChange={handleCheckboxChange}
+                />
+                <Label htmlFor="rememberMe" className="text-sm">Check me.</Label>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full bg-enf-green hover:bg-enf-dark-green"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Logging in..." : "Login"}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Don't have an account?{" "}
+                <Link 
+                  to="/signup" 
+                  className="text-enf-green dark:text-enf-light-green hover:underline"
+                >
+                  Register
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default Login;
