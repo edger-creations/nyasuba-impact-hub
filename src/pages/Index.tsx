@@ -28,22 +28,24 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section - Fixed alignment */}
-      <section className="relative min-h-[650px] w-full hero-pattern flex items-center">
-        <div className="container px-4 mx-auto z-10 py-16 md:py-24">
-          <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left animate-fade-up">
+      {/* Hero Section - Centered alignment */}
+      <section className="relative min-h-[650px] w-full hero-pattern flex items-center justify-center">
+        <div className="container px-4 mx-auto z-10 py-16 md:py-24 flex justify-center">
+          <div className="max-w-3xl text-center animate-fade-up">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Welcome to the Esther Nyasuba Foundation
             </h1>
             <p className="text-xl mb-8 text-gray-600 dark:text-gray-300">
               Empowering communities, transforming lives, and nurturing hope.
             </p>
-            <Button 
-              className="bg-enf-green text-white hover:bg-enf-dark-green"
-              onClick={() => navigate("/programs")}
-            >
-              Explore Our Programs
-            </Button>
+            <div className="flex justify-center">
+              <Button 
+                className="bg-enf-green text-white hover:bg-enf-dark-green"
+                onClick={() => navigate("/programs")}
+              >
+                Explore Our Programs
+              </Button>
+            </div>
           </div>
         </div>
         
