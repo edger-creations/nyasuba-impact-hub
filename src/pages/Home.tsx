@@ -9,16 +9,16 @@ const Home = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-[600px] w-full hero-pattern overflow-hidden flex flex-col justify-center">
-        <div className="container px-4 mx-auto z-10 py-16 md:py-24">
-          <div className="max-w-3xl animate-fade-up">
+      <section className="relative min-h-[600px] w-full hero-pattern flex items-center justify-center">
+        <div className="container mx-auto px-4 z-10 flex justify-center items-center">
+          <div className="max-w-3xl text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Welcome to the Esther Nyasuba Foundation
             </h1>
             <p className="text-xl mb-8 text-gray-600 dark:text-gray-300">
               Empowering communities, uplifting lives, and creating lasting change.
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
               <Link to="/volunteer">
                 <Button className="bg-enf-green text-white hover:bg-enf-dark-green">
                   Join Our Membership
