@@ -1,9 +1,9 @@
-
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, MegaphoneIcon, HeartHandshake, Lightbulb, TreePine, HomeIcon, BookOpen, UsersIcon } from "lucide-react";
+import { ArrowRight, HeartHandshake, Lightbulb, TreePine, HomeIcon, BookOpen, UsersIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -28,36 +28,28 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section - Centered alignment */}
-      <section className="relative min-h-[650px] w-full hero-pattern flex items-center justify-center">
+      {/* Hero Section - Centered and simplified */}
+      <section className="relative min-h-[600px] w-full hero-pattern flex items-center justify-center">
         <div className="container px-4 mx-auto z-10 py-16 md:py-24 flex justify-center">
           <div className="max-w-3xl text-center animate-fade-up">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Welcome to the Esther Nyasuba Foundation
             </h1>
             <p className="text-xl mb-8 text-gray-600 dark:text-gray-300">
-              Empowering communities, transforming lives, and nurturing hope.
+              Empowering communities, uplifting lives, and creating lasting change.
             </p>
-            <div className="flex justify-center">
-              <Button 
-                className="bg-enf-green text-white hover:bg-enf-dark-green"
-                onClick={() => navigate("/programs")}
-              >
-                Explore Our Programs
-              </Button>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link to="/volunteer">
+                <Button className="bg-enf-green text-white hover:bg-enf-dark-green">
+                  Join Our Membership
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button variant="outline" className="border-enf-green text-enf-green hover:bg-enf-green/10 dark:border-enf-light-green dark:text-enf-light-green dark:hover:bg-enf-light-green/10">
+                  Login Now
+                </Button>
+              </Link>
             </div>
-          </div>
-        </div>
-        
-        {/* Announcement - Improved positioning */}
-        <div className="absolute bottom-10 left-0 right-0 mx-auto w-full max-w-3xl px-4">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg shadow-md flex items-center gap-3 animate-fade-in">
-            <div className="bg-enf-green/10 dark:bg-enf-light-green/10 p-2 rounded-full flex-shrink-0">
-              <MegaphoneIcon className="h-5 w-5 text-enf-green dark:text-enf-light-green" />
-            </div>
-            <p className="text-sm font-medium flex-grow">
-              Donate today to support our shelter building initiative for flood victims.
-            </p>
           </div>
         </div>
       </section>
