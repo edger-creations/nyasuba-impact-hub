@@ -12,15 +12,46 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, Phone, CreditCard } from "lucide-react";
+import { Building, Phone, CreditCard, Paypal } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+// Define form schema for donation
+const donationFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  amount: z.string().min(1, { message: "Please enter a donation amount." }),
+  currency: z.string(),
+});
+
+type DonationFormValues = z.infer<typeof donationFormSchema>;
 
 const Donate = () => {
   const [donationAmount, setDonationAmount] = useState("");
   const [customAmount, setCustomAmount] = useState("");
   const [currency, setCurrency] = useState("KSH");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("card");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<DonationFormValues>({
+    resolver: zodResolver(donationFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      amount: "",
+      currency: "KSH",
+    },
+  });
 
   const predefinedAmounts = [
     { value: "1000", label: "1,000" },
@@ -31,40 +62,82 @@ const Donate = () => {
   const handleAmountClick = (amount: string) => {
     setDonationAmount(amount);
     setCustomAmount("");
+    form.setValue("amount", amount);
   };
 
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCustomAmount(e.target.value);
     setDonationAmount("");
+    form.setValue("amount", e.target.value);
   };
 
   const handleCurrencyChange = (value: string) => {
     setCurrency(value);
+    form.setValue("currency", value);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (name === "name") setName(value);
-    if (name === "email") setEmail(value);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const finalAmount = donationAmount || customAmount;
-    if (!finalAmount) {
-      toast.error("Please select or enter a donation amount.");
-      return;
-    }
-    
-    setIsSubmitting(true);
-
+  const processStripePayment = async (formData: DonationFormValues) => {
+    // In a real application, you would call your backend to create a Stripe checkout session
+    // For demonstration, we're simulating with a timeout
     try {
-      // In a real application, you would send this to your payment gateway
+      // Replace with your actual publishable key
+      const stripePublishableKey = "pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY";
+      
+      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
-      toast.success("Thank you for your donation! You will be redirected to complete the payment.");
-      // In a real app, you would redirect to a payment page or process the payment here
+      toast.success("Payment initiated! You will be redirected to complete the payment.");
+      // In a real app, you would redirect to Stripe checkout
+      
+      console.log("Stripe payment processing with:", {
+        key: stripePublishableKey,
+        amount: formData.amount,
+        currency: formData.currency,
+        name: formData.name,
+        email: formData.email
+      });
+      
+    } catch (error) {
+      toast.error("There was an error processing your card payment. Please try again.");
+      console.error("Stripe error:", error);
+    }
+  };
+
+  const processPayPalPayment = async (formData: DonationFormValues) => {
+    // In a real application, you would initialize PayPal SDK and create an order
+    try {
+      // Replace with your actual client ID
+      const paypalClientId = "REPLACE_WITH_YOUR_PAYPAL_CLIENT_ID";
+      
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      toast.success("PayPal payment initiated! You will be redirected to complete the payment.");
+      // In a real app, you would redirect to PayPal checkout
+      
+      console.log("PayPal payment processing with:", {
+        clientId: paypalClientId,
+        amount: formData.amount,
+        currency: formData.currency,
+        name: formData.name,
+        email: formData.email
+      });
+      
+    } catch (error) {
+      toast.error("There was an error processing your PayPal payment. Please try again.");
+      console.error("PayPal error:", error);
+    }
+  };
+
+  const onSubmit = async (formData: DonationFormValues) => {
+    setIsSubmitting(true);
+    
+    try {
+      if (paymentMethod === "card") {
+        await processStripePayment(formData);
+      } else if (paymentMethod === "paypal") {
+        await processPayPalPayment(formData);
+      }
     } catch (error) {
       toast.error("There was an error processing your donation. Please try again.");
       console.error("Donation error:", error);
@@ -125,60 +198,168 @@ const Donate = () => {
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-6">Online Payment</h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Select Currency:</Label>
-                  <Select
-                    value={currency}
-                    onValueChange={handleCurrencyChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="KSH">Kenyan Shilling (KSH)</SelectItem>
-                      <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                      <SelectItem value="GBP">British Pound (GBP)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <Tabs defaultValue="card" onValueChange={setPaymentMethod}>
+                <TabsList className="grid grid-cols-2 mb-6 w-full">
+                  <TabsTrigger value="card" className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Pay By Card
+                  </TabsTrigger>
+                  <TabsTrigger value="paypal" className="flex items-center gap-2">
+                    <Paypal className="h-4 w-4" />
+                    Pay With PayPal
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="card">
+                  <h2 className="text-xl font-bold mb-6">Card Payment</h2>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="space-y-2">
+                        <FormField
+                          control={form.control}
+                          name="currency"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Select Currency:</FormLabel>
+                              <Select 
+                                value={currency} 
+                                onValueChange={(value) => {
+                                  handleCurrencyChange(value);
+                                  field.onChange(value);
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select currency" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="KSH">Kenyan Shilling (KSH)</SelectItem>
+                                  <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                                  <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                                  <SelectItem value="GBP">British Pound (GBP)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name">Your Name:</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={name}
-                    onChange={handleInputChange}
-                    placeholder="Enter your name"
-                    required
-                  />
-                </div>
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Your Name:</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter your name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Your Email:</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={email}
-                    onChange={handleInputChange}
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Your Email:</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="Enter your email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-enf-green hover:bg-enf-dark-green"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Processing..." : "Donate Now"}
-                </Button>
-              </form>
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-enf-green hover:bg-enf-dark-green"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Donate By Card"}
+                      </Button>
+                    </form>
+                  </Form>
+                </TabsContent>
+                
+                <TabsContent value="paypal">
+                  <h2 className="text-xl font-bold mb-6">PayPal Payment</h2>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="space-y-2">
+                        <FormField
+                          control={form.control}
+                          name="currency"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Select Currency:</FormLabel>
+                              <Select 
+                                value={currency} 
+                                onValueChange={(value) => {
+                                  handleCurrencyChange(value);
+                                  field.onChange(value);
+                                }}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select currency" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="KSH">Kenyan Shilling (KSH)</SelectItem>
+                                  <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                                  <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                                  <SelectItem value="GBP">British Pound (GBP)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Your Name:</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter your name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Your Email:</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="Enter your email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-[#0070ba] hover:bg-[#005ea6] text-white"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Donate With PayPal"}
+                      </Button>
+                    </form>
+                  </Form>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
 
