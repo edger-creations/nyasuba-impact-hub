@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -279,7 +280,7 @@ const Donate = () => {
                         className="w-full bg-enf-green hover:bg-enf-dark-green"
                         disabled={isSubmitting}
                       >
-                        {isSubmitting ? "Donate By Card"}
+                        {isSubmitting ? "Processing..." : "Donate By Card"}
                       </Button>
                     </form>
                   </Form>
@@ -354,7 +355,7 @@ const Donate = () => {
                         className="w-full bg-[#0070ba] hover:bg-[#005ea6] text-white"
                         disabled={isSubmitting}
                       >
-                        {isSubmitting ? "Donate With PayPal"}
+                        {isSubmitting ? "Processing..." : "Donate With PayPal"}
                       </Button>
                     </form>
                   </Form>
