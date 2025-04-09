@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, Phone, CreditCard, Paypal } from "lucide-react";
+import { Building, Phone, CreditCard, DollarSign } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -27,7 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Define form schema for donation
 const donationFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -78,18 +76,12 @@ const Donate = () => {
   };
 
   const processStripePayment = async (formData: DonationFormValues) => {
-    // In a real application, you would call your backend to create a Stripe checkout session
-    // For demonstration, we're simulating with a timeout
     try {
-      // Replace with your actual publishable key
       const stripePublishableKey = "pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY";
       
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
       toast.success("Payment initiated! You will be redirected to complete the payment.");
-      // In a real app, you would redirect to Stripe checkout
-      
       console.log("Stripe payment processing with:", {
         key: stripePublishableKey,
         amount: formData.amount,
@@ -105,17 +97,12 @@ const Donate = () => {
   };
 
   const processPayPalPayment = async (formData: DonationFormValues) => {
-    // In a real application, you would initialize PayPal SDK and create an order
     try {
-      // Replace with your actual client ID
       const paypalClientId = "REPLACE_WITH_YOUR_PAYPAL_CLIENT_ID";
       
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
       toast.success("PayPal payment initiated! You will be redirected to complete the payment.");
-      // In a real app, you would redirect to PayPal checkout
-      
       console.log("PayPal payment processing with:", {
         clientId: paypalClientId,
         amount: formData.amount,
@@ -149,7 +136,6 @@ const Donate = () => {
 
   return (
     <Layout>
-      {/* Hero */}
       <div className="bg-enf-green text-white py-12">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-3xl font-bold mb-4">Support Our Mission</h1>
@@ -159,10 +145,8 @@ const Donate = () => {
         </div>
       </div>
 
-      {/* Donation Section */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Donation Form */}
           <div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
               <h2 className="text-2xl font-bold mb-6 text-center">Choose Donation Amount</h2>
@@ -206,7 +190,7 @@ const Donate = () => {
                     Pay By Card
                   </TabsTrigger>
                   <TabsTrigger value="paypal" className="flex items-center gap-2">
-                    <Paypal className="h-4 w-4" />
+                    <DollarSign className="h-4 w-4" />
                     Pay With PayPal
                   </TabsTrigger>
                 </TabsList>
@@ -364,7 +348,6 @@ const Donate = () => {
             </div>
           </div>
 
-          {/* Other Payment Methods and Impact */}
           <div className="space-y-8">
             <div>
               <h2 className="text-2xl font-bold mb-6">Ways to Donate</h2>
