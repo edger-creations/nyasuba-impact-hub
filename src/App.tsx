@@ -22,6 +22,16 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Donate from "./pages/Donate";
 import NotFound from "./pages/NotFound";
 
+// Admin Pages
+import AdminIndex from "./pages/admin/index";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminPrograms from "./pages/admin/Programs";
+import AdminVolunteers from "./pages/admin/Volunteers";
+import AdminDonations from "./pages/admin/Donations";
+import AdminGallery from "./pages/admin/Gallery";
+import AdminReviews from "./pages/admin/Reviews";
+import AdminSettings from "./pages/admin/Settings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -33,6 +43,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<Home />} />
               <Route path="/programs" element={<Programs />} />
               <Route path="/about" element={<About />} />
@@ -45,6 +56,18 @@ const App = () => (
               <Route path="/signup" element={<SignUp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/donate" element={<Donate />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminIndex />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/programs" element={<AdminPrograms />} />
+              <Route path="/admin/volunteers" element={<AdminVolunteers />} />
+              <Route path="/admin/donations" element={<AdminDonations />} />
+              <Route path="/admin/gallery" element={<AdminGallery />} />
+              <Route path="/admin/reviews" element={<AdminReviews />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              
+              {/* Catch-all route for 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
