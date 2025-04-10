@@ -2,7 +2,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { PanelLeft, LayoutDashboard, FileText, Users, HandCoins, Image, MessageSquare, Settings, LogOut } from "lucide-react";
+import { PanelLeft, LayoutDashboard, FileText, Users, HandCoins, Image, MessageSquare, Settings, LogOut, UserCog } from "lucide-react";
 import { useState } from "react";
 
 const AdminSidebar = () => {
@@ -46,6 +46,11 @@ const AdminSidebar = () => {
       title: "Reviews",
       icon: <MessageSquare className="h-5 w-5" />,
       path: "/admin/reviews",
+    },
+    {
+      title: "Users",
+      icon: <UserCog className="h-5 w-5" />,
+      path: "/admin/users",
     },
     {
       title: "Settings",

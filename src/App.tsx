@@ -31,6 +31,7 @@ import AdminDonations from "./pages/admin/Donations";
 import AdminGallery from "./pages/admin/Gallery";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminSettings from "./pages/admin/Settings";
+import AdminUsers from "./pages/admin/Users"; // Add the new Users page
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/admin/gallery" element={<AdminGallery />} />
               <Route path="/admin/reviews" element={<AdminReviews />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/users" element={<AdminUsers />} /> {/* Add the new route */}
               
               {/* Catch-all route for 404 */}
               <Route path="*" element={<NotFound />} />

@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const AdminIndex = () => {
   const navigate = useNavigate();
@@ -10,7 +11,8 @@ const AdminIndex = () => {
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated || !user?.isAdmin) {
-        // If not authenticated as admin, redirect to login
+        // If not authenticated as admin, redirect to login with a message
+        toast.error("Please login as an administrator to access the admin panel");
         navigate("/login?redirect=/admin/dashboard");
       } else {
         // If authenticated as admin, redirect to dashboard
