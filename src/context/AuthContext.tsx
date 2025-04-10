@@ -39,11 +39,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Simulating API delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
+      // Check if the login is using admin credentials
+      const isAdmin = email === "admin@esthernyasubafoundation.org" && 
+                     password === "Elly@12345@2024#";
+      
       const mockUser = {
-        id: "user-123",
-        name: email.split("@")[0],
+        id: isAdmin ? "admin-123" : "user-123",
+        name: isAdmin ? "Administrator" : email.split("@")[0],
         email,
-        isAdmin: false,
+        isAdmin: isAdmin, // Set admin status based on credentials
       };
       
       setUser(mockUser);

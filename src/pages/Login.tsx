@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -60,18 +59,17 @@ const Login = () => {
     }
   };
 
-  // Admin login simulation for demo purposes
+  // Admin login with updated credentials
   const handleAdminLogin = async () => {
     setIsSubmitting(true);
     try {
-      // For demo only, in a real app this would be authenticated properly
-      const adminEmail = "admin@estherfoundation.org";
-      const adminPassword = "admin123"; // In a real app, never hardcode passwords
+      // Updated admin credentials as specified
+      const adminEmail = "admin@esthernyasubafoundation.org";
+      const adminPassword = "Elly@12345@2024#";
       
       // Call the normal login function with admin credentials
       await login(adminEmail, adminPassword);
       
-      // The login function in AuthContext should set isAdmin=true for this account
       toast.success("Admin login successful!");
       navigate("/admin/dashboard");
     } catch (error) {
