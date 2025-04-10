@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
+import { useState } from "react";
 
 // Pages
 import Home from "./pages/Home";
@@ -31,52 +32,55 @@ import AdminDonations from "./pages/admin/Donations";
 import AdminGallery from "./pages/admin/Gallery";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminSettings from "./pages/admin/Settings";
-import AdminUsers from "./pages/admin/Users"; // Add the new Users page
+import AdminUsers from "./pages/admin/Users";
 
-const queryClient = new QueryClient();
+const App = () => {
+  // Create a new QueryClient instance inside the component
+  const [queryClient] = useState(() => new QueryClient());
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="enf-theme">
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/programs" element={<Programs />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/gallery" element={<Gallery />} />
-              <Route path="/volunteer" element={<Volunteer />} />
-              <Route path="/volunteer/apply" element={<VolunteerForm />} />
-              <Route path="/reviews" element={<Reviews />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/donate" element={<Donate />} />
-              
-              {/* Admin routes */}
-              <Route path="/admin" element={<AdminIndex />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/programs" element={<AdminPrograms />} />
-              <Route path="/admin/volunteers" element={<AdminVolunteers />} />
-              <Route path="/admin/donations" element={<AdminDonations />} />
-              <Route path="/admin/gallery" element={<AdminGallery />} />
-              <Route path="/admin/reviews" element={<AdminReviews />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
-              <Route path="/admin/users" element={<AdminUsers />} /> {/* Add the new route */}
-              
-              {/* Catch-all route for 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="enf-theme">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/programs" element={<Programs />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/gallery" element={<Gallery />} />
+                <Route path="/volunteer" element={<Volunteer />} />
+                <Route path="/volunteer/apply" element={<VolunteerForm />} />
+                <Route path="/reviews" element={<Reviews />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/donate" element={<Donate />} />
+                
+                {/* Admin routes */}
+                <Route path="/admin" element={<AdminIndex />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/programs" element={<AdminPrograms />} />
+                <Route path="/admin/volunteers" element={<AdminVolunteers />} />
+                <Route path="/admin/donations" element={<AdminDonations />} />
+                <Route path="/admin/gallery" element={<AdminGallery />} />
+                <Route path="/admin/reviews" element={<AdminReviews />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                
+                {/* Catch-all route for 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
