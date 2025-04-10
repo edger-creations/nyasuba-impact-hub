@@ -2,11 +2,39 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartBar, Users, HandCoins, Calendar, RefreshCw } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { ChartBar, Users, HandCoins, Calendar, RefreshCw, LineChart, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { 
+  ChartContainer, 
+  ChartTooltip, 
+  ChartTooltipContent 
+} from "@/components/ui/chart";
+
+// Mock data for donation trends
+const donationData = [
+  { name: "Jan", amount: 24000 },
+  { name: "Feb", amount: 18000 },
+  { name: "Mar", amount: 29000 },
+  { name: "Apr", amount: 32000 },
+  { name: "May", amount: 27000 },
+  { name: "Jun", amount: 38000 },
+  { name: "Jul", amount: 42000 },
+];
+
+// Mock data for volunteer growth
+const volunteerData = [
+  { name: "Jan", count: 12 },
+  { name: "Feb", count: 15 },
+  { name: "Mar", count: 18 },
+  { name: "Apr", count: 24 },
+  { name: "May", count: 28 },
+  { name: "Jun", count: 32 },
+  { name: "Jul", count: 42 },
+];
 
 const AdminDashboard = () => {
-  // In a real app, this would come from an API
   const [stats, setStats] = useState({
     totalDonations: 0,
     activeVolunteers: 0,
@@ -14,10 +42,12 @@ const AdminDashboard = () => {
     upcomingEvents: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   const fetchStats = async () => {
-    setLoading(true);
+    setRefreshing(true);
     // Mock data - in a real app, this would be an API call
     try {
       // Simulate network delay
@@ -34,10 +64,14 @@ const AdminDashboard = () => {
       });
       
       setLastUpdated(new Date());
+      toast.success("Dashboard data refreshed successfully");
     } catch (error) {
       console.error("Error fetching stats:", error);
+      toast.error("Failed to refresh dashboard data");
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      setChartLoading(false);
     }
   };
 
@@ -69,9 +103,13 @@ const AdminDashboard = () => {
               variant="outline" 
               size="sm" 
               onClick={handleRefresh}
-              disabled={loading}
+              disabled={refreshing}
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+              {refreshing ? (
+                <Loader className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-1" />
+              )}
               Refresh
             </Button>
           </div>
@@ -120,6 +158,91 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats.upcomingEvents}</div>
               <p className="text-xs text-muted-foreground">In the next 30 days</p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Donation Trends</CardTitle>
+            </CardHeader>
+            <CardContent className="h-80">
+              {chartLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader className="h-8 w-8 animate-spin text-enf-green" />
+                </div>
+              ) : (
+                <ChartContainer
+                  config={{
+                    amount: {
+                      theme: {
+                        light: "hsl(142, 76%, 36%)",  // enf-green
+                        dark: "hsl(143, 85%, 96%)",   // enf-light-green
+                      },
+                    },
+                  }}
+                >
+                  <AreaChart
+                    data={donationData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Area
+                      type="monotone"
+                      dataKey="amount"
+                      name="Donations (KSH)"
+                      stroke="var(--color-amount)"
+                      fill="var(--color-amount)"
+                      fillOpacity={0.2}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Volunteer Growth</CardTitle>
+            </CardHeader>
+            <CardContent className="h-80">
+              {chartLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader className="h-8 w-8 animate-spin text-enf-green" />
+                </div>
+              ) : (
+                <ChartContainer
+                  config={{
+                    count: {
+                      theme: {
+                        light: "hsl(142, 76%, 36%)",  // enf-green
+                        dark: "hsl(143, 85%, 96%)",   // enf-light-green
+                      },
+                    },
+                  }}
+                >
+                  <BarChart
+                    data={volunteerData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar
+                      dataKey="count"
+                      name="Volunteers"
+                      fill="var(--color-count)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              )}
             </CardContent>
           </Card>
         </div>

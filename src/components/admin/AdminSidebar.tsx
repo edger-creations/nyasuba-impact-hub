@@ -61,7 +61,7 @@ const AdminSidebar = () => {
 
   return (
     <div 
-      className={`bg-white dark:bg-gray-800 shadow-md transition-all duration-300 ${
+      className={`bg-white dark:bg-gray-800 shadow-md transition-all duration-300 h-screen ${
         collapsed ? "w-20" : "w-64"
       }`}
     >
@@ -79,7 +79,7 @@ const AdminSidebar = () => {
         </Button>
       </div>
 
-      <div className="flex flex-col p-4">
+      <div className="flex flex-col p-4 overflow-y-auto h-[calc(100vh-180px)]">
         {menuItems.map((item) => (
           <Button
             key={item.path}
