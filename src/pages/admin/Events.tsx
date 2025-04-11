@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +7,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 
 import AdminLayout from "@/components/admin/AdminLayout";
+import NotificationModal from "@/components/admin/NotificationModal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -63,8 +63,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { EventNotificationData } from "@/services/notificationService";
 
-// Define the event schema
 const eventFormSchema = z.object({
   title: z.string().min(3, {
     message: "Event title must be at least 3 characters.",
@@ -84,7 +84,6 @@ const eventFormSchema = z.object({
   image: z.string().optional(),
 });
 
-// Define the Event type to match our schema
 interface Event {
   id: string;
   title: string;
@@ -97,7 +96,6 @@ interface Event {
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
 
-// Mock data for events - in a real app, this would come from an API/database
 const initialEvents: Event[] = [
   {
     id: '1',
@@ -125,9 +123,8 @@ const AdminEvents = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSendingNotifications, setIsSendingNotifications] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
-  // Initialize form for adding events
   const addForm = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -139,7 +136,6 @@ const AdminEvents = () => {
     },
   });
 
-  // Initialize form for editing events
   const editForm = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -151,11 +147,9 @@ const AdminEvents = () => {
     },
   });
 
-  // Function to handle form submission for adding new events
   const onAddSubmit = (data: EventFormValues) => {
     setIsLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       const newEvent: Event = {
         id: Date.now().toString(),
@@ -176,7 +170,6 @@ const AdminEvents = () => {
     }, 800);
   };
 
-  // Function to handle form submission for editing events
   const onEditSubmit = (data: EventFormValues) => {
     setIsLoading(true);
     
@@ -185,7 +178,6 @@ const AdminEvents = () => {
       return;
     }
     
-    // Simulate API call
     setTimeout(() => {
       const updatedEvents = events.map(event => 
         event.id === selectedEvent.id 
@@ -210,11 +202,9 @@ const AdminEvents = () => {
     }, 800);
   };
 
-  // Function to handle event deletion
   const handleDeleteEvent = (id: string) => {
     setIsLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       const filteredEvents = events.filter(event => event.id !== id);
       setEvents(filteredEvents);
@@ -224,7 +214,6 @@ const AdminEvents = () => {
     }, 800);
   };
 
-  // Function to open edit dialog and populate form with event data
   const handleEditEvent = (event: Event) => {
     setSelectedEvent(event);
     
@@ -240,15 +229,18 @@ const AdminEvents = () => {
     setIsEditDialogOpen(true);
   };
 
-  // Function to send notifications to users about an event
   const handleSendNotifications = (event: Event) => {
-    setIsSendingNotifications(true);
+    setSelectedEvent(event);
     
-    // Simulate API call to send notifications
-    setTimeout(() => {
-      setIsSendingNotifications(false);
-      toast.success(`Notifications sent to all registered users about "${event.title}"`);
-    }, 1500);
+    const eventData: EventNotificationData = {
+      eventTitle: event.title,
+      eventDate: new Date(event.date),
+      eventTime: event.time,
+      eventLocation: event.location,
+      eventDescription: event.description
+    };
+    
+    setIsNotificationModalOpen(true);
   };
 
   return (
@@ -421,161 +413,20 @@ const AdminEvents = () => {
           </Dialog>
         </div>
 
-        {/* Edit Event Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit Event</DialogTitle>
-              <DialogDescription>
-                Update the event details below. Click save when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-                <FormField
-                  control={editForm.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter event title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={editForm.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Enter event description" 
-                          className="min-h-[100px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={editForm.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter event location" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={editForm.control}
-                    name="time"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Time</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="time"
-                            placeholder="Enter event time" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={editForm.control}
-                  name="image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Image URL (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter image URL" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Provide a URL for an image related to this event
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      "Update Event"
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        {selectedEvent && (
+          <NotificationModal
+            open={isNotificationModalOpen}
+            onOpenChange={setIsNotificationModalOpen}
+            eventData={{
+              eventTitle: selectedEvent.title,
+              eventDate: new Date(selectedEvent.date),
+              eventTime: selectedEvent.time,
+              eventLocation: selectedEvent.location,
+              eventDescription: selectedEvent.description
+            }}
+          />
+        )}
 
-        {/* Events List */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
             <Card key={event.id}>
@@ -631,18 +482,8 @@ const AdminEvents = () => {
                   size="sm" 
                   className="text-blue-500"
                   onClick={() => handleSendNotifications(event)}
-                  disabled={isSendingNotifications}
                 >
-                  {isSendingNotifications ? (
-                    <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-1" /> Notify Users
-                    </>
-                  )}
+                  <Send className="h-4 w-4 mr-1" /> Notify Users
                 </Button>
               </CardFooter>
             </Card>
@@ -655,7 +496,6 @@ const AdminEvents = () => {
           </div>
         )}
 
-        {/* Upcoming Events Table */}
         <div className="mt-10">
           <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
           <Card>
