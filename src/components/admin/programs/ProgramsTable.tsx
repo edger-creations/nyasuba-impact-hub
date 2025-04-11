@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Program } from "@/types/program";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, Image } from "lucide-react";
 
 interface ProgramsTableProps {
   programs: Program[];
@@ -22,6 +22,7 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-[100px]">Image</TableHead>
           <TableHead>Title</TableHead>
           <TableHead>Description</TableHead>
           <TableHead>Action</TableHead>
@@ -32,13 +33,26 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
       <TableBody>
         {programs.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-4">
+            <TableCell colSpan={6} className="text-center py-4">
               No programs found
             </TableCell>
           </TableRow>
         ) : (
           programs.map((program) => (
             <TableRow key={program.id}>
+              <TableCell>
+                {program.image && program.image !== "/placeholder.svg" ? (
+                  <img 
+                    src={program.image} 
+                    alt={program.title}
+                    className="w-12 h-12 object-cover rounded-md"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+                    <Image className="h-6 w-6 text-gray-400" />
+                  </div>
+                )}
+              </TableCell>
               <TableCell className="font-medium">{program.title}</TableCell>
               <TableCell className="max-w-[300px] truncate">{program.description}</TableCell>
               <TableCell>{program.action}</TableCell>

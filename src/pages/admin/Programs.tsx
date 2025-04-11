@@ -152,7 +152,7 @@ const ProgramsAdmin = () => {
                 Add Program
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[625px]">
+            <DialogContent className="sm:max-w-[725px]">
               <DialogHeader>
                 <DialogTitle>{isEditing ? "Edit Program" : "Add New Program"}</DialogTitle>
                 <DialogDescription>
