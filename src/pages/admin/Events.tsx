@@ -84,10 +84,21 @@ const eventFormSchema = z.object({
   image: z.string().optional(),
 });
 
+// Define the Event type to match our schema
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  date: Date;
+  time: string;
+  image: string;
+}
+
 type EventFormValues = z.infer<typeof eventFormSchema>;
 
 // Mock data for events - in a real app, this would come from an API/database
-const initialEvents = [
+const initialEvents: Event[] = [
   {
     id: '1',
     title: 'Community Outreach',
@@ -109,10 +120,10 @@ const initialEvents = [
 ];
 
 const AdminEvents = () => {
-  const [events, setEvents] = useState(initialEvents);
+  const [events, setEvents] = useState<Event[]>(initialEvents);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingNotifications, setIsSendingNotifications] = useState(false);
 
@@ -146,9 +157,14 @@ const AdminEvents = () => {
     
     // Simulate API call
     setTimeout(() => {
-      const newEvent = {
+      const newEvent: Event = {
         id: Date.now().toString(),
-        ...data,
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        date: data.date,
+        time: data.time,
+        image: data.image || '',
       };
       
       setEvents([...events, newEvent]);
@@ -164,10 +180,25 @@ const AdminEvents = () => {
   const onEditSubmit = (data: EventFormValues) => {
     setIsLoading(true);
     
+    if (!selectedEvent) {
+      setIsLoading(false);
+      return;
+    }
+    
     // Simulate API call
     setTimeout(() => {
       const updatedEvents = events.map(event => 
-        event.id === selectedEvent.id ? { ...event, ...data } : event
+        event.id === selectedEvent.id 
+          ? { 
+              ...event, 
+              title: data.title,
+              description: data.description,
+              location: data.location,
+              date: data.date,
+              time: data.time,
+              image: data.image || '',
+            } 
+          : event
       );
       
       setEvents(updatedEvents);
@@ -194,7 +225,7 @@ const AdminEvents = () => {
   };
 
   // Function to open edit dialog and populate form with event data
-  const handleEditEvent = (event: any) => {
+  const handleEditEvent = (event: Event) => {
     setSelectedEvent(event);
     
     editForm.reset({
@@ -210,7 +241,7 @@ const AdminEvents = () => {
   };
 
   // Function to send notifications to users about an event
-  const handleSendNotifications = (event: any) => {
+  const handleSendNotifications = (event: Event) => {
     setIsSendingNotifications(true);
     
     // Simulate API call to send notifications

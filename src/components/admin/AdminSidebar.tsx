@@ -90,7 +90,8 @@ const AdminSidebar = () => {
             key={item.path}
             variant="ghost"
             className={`justify-start mb-1 ${
-              location.pathname === item.path
+              location.pathname === item.path || 
+              (item.path.includes('/admin/events') && location.pathname.includes('/admin/events'))
                 ? "bg-enf-green/10 text-enf-green dark:bg-enf-light-green/10 dark:text-enf-light-green"
                 : ""
             } ${collapsed ? "px-2" : "px-4"}`}
