@@ -2,7 +2,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { PanelLeft, LayoutDashboard, FileText, Users, HandCoins, Image, MessageSquare, Settings, LogOut, UserCog } from "lucide-react";
+import { PanelLeft, LayoutDashboard, FileText, Users, HandCoins, Image, MessageSquare, Settings, LogOut, UserCog, Calendar } from "lucide-react";
 import { useState } from "react";
 
 const AdminSidebar = () => {
@@ -26,6 +26,11 @@ const AdminSidebar = () => {
       title: "Programs",
       icon: <FileText className="h-5 w-5" />,
       path: "/admin/programs",
+    },
+    {
+      title: "Events",
+      icon: <Calendar className="h-5 w-5" />,
+      path: "/admin/events",
     },
     {
       title: "Volunteers",

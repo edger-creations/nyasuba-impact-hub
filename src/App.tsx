@@ -33,6 +33,7 @@ import AdminGallery from "./pages/admin/Gallery";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminSettings from "./pages/admin/Settings";
 import AdminUsers from "./pages/admin/Users";
+import AdminEvents from "./pages/admin/Events";
 
 const App = () => {
   // Create a new QueryClient instance inside the component
@@ -71,6 +72,7 @@ const App = () => {
                 <Route path="/admin/reviews" element={<AdminReviews />} />
                 <Route path="/admin/settings" element={<AdminSettings />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/events" element={<AdminEvents />} />
                 
                 {/* Catch-all route for 404 */}
                 <Route path="*" element={<NotFound />} />
