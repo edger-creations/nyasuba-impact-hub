@@ -34,6 +34,11 @@ export const sendEventEmailNotifications = async (
   eventData: EventNotificationData
 ): Promise<boolean> => {
   try {
+    if (!recipients || recipients.length === 0) {
+      toast.warning("No recipients selected for email notifications");
+      return false;
+    }
+
     // In a real application, this would make an API call to a backend service
     // that would handle the actual sending of emails using the SMTP configuration
     
@@ -52,7 +57,8 @@ export const sendEventEmailNotifications = async (
     return true;
   } catch (error) {
     console.error("Error sending email notifications:", error);
-    toast.error("Failed to send email notifications");
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    toast.error(`Failed to send email notifications: ${errorMessage}`);
     return false;
   }
 };
@@ -89,7 +95,8 @@ export const sendEventSMSNotifications = async (
     return true;
   } catch (error) {
     console.error("Error sending SMS notifications:", error);
-    toast.error("Failed to send SMS notifications");
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    toast.error(`Failed to send SMS notifications: ${errorMessage}`);
     return false;
   }
 };
@@ -101,8 +108,33 @@ export const sendEventNotifications = async (
   recipients: NotificationRecipient[],
   eventData: EventNotificationData
 ): Promise<boolean> => {
-  const emailResult = await sendEventEmailNotifications(recipients, eventData);
-  const smsResult = await sendEventSMSNotifications(recipients, eventData);
-  
-  return emailResult || smsResult;
+  try {
+    if (!recipients || recipients.length === 0) {
+      toast.warning("No recipients selected for notifications");
+      return false;
+    }
+
+    const emailResult = await sendEventEmailNotifications(recipients, eventData);
+    const smsResult = await sendEventSMSNotifications(recipients, eventData);
+    
+    if (emailResult && smsResult) {
+      toast.success("All notifications sent successfully");
+    } else if (emailResult) {
+      toast.success("Email notifications sent successfully");
+      toast.warning("SMS notifications could not be sent");
+    } else if (smsResult) {
+      toast.success("SMS notifications sent successfully");
+      toast.warning("Email notifications could not be sent");
+    } else {
+      toast.error("Failed to send any notifications");
+      return false;
+    }
+    
+    return emailResult || smsResult;
+  } catch (error) {
+    console.error("Error sending notifications:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    toast.error(`Failed to send notifications: ${errorMessage}`);
+    return false;
+  }
 };

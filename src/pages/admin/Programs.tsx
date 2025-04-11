@@ -1,14 +1,14 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Edit, Trash, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { ProgramForm } from "@/components/admin/programs/ProgramForm";
+import { ProgramsTable } from "@/components/admin/programs/ProgramsTable";
+import { Program } from "@/types/program";
 
 // This would come from an API in a real application
 const initialPrograms = [
@@ -63,10 +63,10 @@ const initialPrograms = [
 ];
 
 const ProgramsAdmin = () => {
-  const [programs, setPrograms] = useState(initialPrograms);
+  const [programs, setPrograms] = useState<Program[]>(initialPrograms);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentProgram, setCurrentProgram] = useState({
+  const [currentProgram, setCurrentProgram] = useState<Program>({
     id: "",
     title: "",
     description: "",
@@ -82,31 +82,41 @@ const ProgramsAdmin = () => {
   );
 
   const handleAddOrEdit = () => {
-    if (isEditing) {
-      // Update existing program
-      setPrograms(programs.map(p => p.id === currentProgram.id ? currentProgram : p));
-      toast.success("Program updated successfully!");
-    } else {
-      // Add new program
-      const newProgram = {
-        ...currentProgram,
-        id: Date.now().toString(),
-      };
-      setPrograms([...programs, newProgram]);
-      toast.success("Program added successfully!");
+    try {
+      if (isEditing) {
+        // Update existing program
+        setPrograms(programs.map(p => p.id === currentProgram.id ? currentProgram : p));
+        toast.success("Program updated successfully!");
+      } else {
+        // Add new program
+        const newProgram = {
+          ...currentProgram,
+          id: Date.now().toString(),
+        };
+        setPrograms([...programs, newProgram]);
+        toast.success("Program added successfully!");
+      }
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      toast.error("Failed to save program. Please try again.");
+      console.error("Error saving program:", error);
     }
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this program?")) {
-      setPrograms(programs.filter(p => p.id !== id));
-      toast.success("Program deleted successfully!");
+    try {
+      if (confirm("Are you sure you want to delete this program?")) {
+        setPrograms(programs.filter(p => p.id !== id));
+        toast.success("Program deleted successfully!");
+      }
+    } catch (error) {
+      toast.error("Failed to delete program. Please try again.");
+      console.error("Error deleting program:", error);
     }
   };
 
-  const handleEdit = (program: typeof currentProgram) => {
+  const handleEdit = (program: Program) => {
     setCurrentProgram(program);
     setIsEditing(true);
     setIsDialogOpen(true);
@@ -151,66 +161,13 @@ const ProgramsAdmin = () => {
                     : "Add a new program to the Esther Nyasuba Foundation."}
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="text-right">
-                    Title
-                  </Label>
-                  <Input
-                    id="title"
-                    value={currentProgram.title}
-                    onChange={(e) => setCurrentProgram({...currentProgram, title: e.target.value})}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label htmlFor="description" className="text-right pt-2">
-                    Description
-                  </Label>
-                  <Textarea
-                    id="description"
-                    value={currentProgram.description}
-                    onChange={(e) => setCurrentProgram({...currentProgram, description: e.target.value})}
-                    className="col-span-3"
-                    rows={4}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="action" className="text-right">
-                    Action Button Text
-                  </Label>
-                  <Input
-                    id="action"
-                    value={currentProgram.action}
-                    onChange={(e) => setCurrentProgram({...currentProgram, action: e.target.value})}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="link" className="text-right">
-                    Link
-                  </Label>
-                  <Input
-                    id="link"
-                    value={currentProgram.link}
-                    onChange={(e) => setCurrentProgram({...currentProgram, link: e.target.value})}
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  type="button" 
-                  className="bg-enf-green hover:bg-enf-dark-green"
-                  onClick={handleAddOrEdit}
-                  disabled={!currentProgram.title || !currentProgram.description}
-                >
-                  {isEditing ? "Update Program" : "Add Program"}
-                </Button>
-              </DialogFooter>
+              <ProgramForm
+                currentProgram={currentProgram}
+                setCurrentProgram={setCurrentProgram}
+                onCancel={() => setIsDialogOpen(false)}
+                onSubmit={handleAddOrEdit}
+                isEditing={isEditing}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -226,52 +183,11 @@ const ProgramsAdmin = () => {
         </div>
         
         <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Link</TableHead>
-                <TableHead className="text-right">Options</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPrograms.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
-                    No programs found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredPrograms.map((program) => (
-                  <TableRow key={program.id}>
-                    <TableCell className="font-medium">{program.title}</TableCell>
-                    <TableCell className="max-w-[300px] truncate">{program.description}</TableCell>
-                    <TableCell>{program.action}</TableCell>
-                    <TableCell>{program.link}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(program)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(program.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/10"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <ProgramsTable
+            programs={filteredPrograms}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </div>
       </div>
     </AdminLayout>

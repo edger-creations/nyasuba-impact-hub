@@ -1,4 +1,6 @@
 
+import { toast } from "sonner";
+
 // Mock user data for demo purposes
 const MOCK_USERS = [
   {
@@ -49,9 +51,57 @@ export interface User {
  * Get all registered users
  */
 export const getRegisteredUsers = async (): Promise<User[]> => {
-  // Simulate API call with a delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Return only registered users
-  return MOCK_USERS.filter(user => user.isRegistered);
+  try {
+    // Simulate API call with a delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Return only registered users
+    return MOCK_USERS.filter(user => user.isRegistered);
+  } catch (error) {
+    console.error("Error fetching registered users:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    toast.error(`Failed to fetch users: ${errorMessage}`);
+    return [];
+  }
+};
+
+/**
+ * Get users with phone numbers
+ */
+export const getUsersWithPhoneNumbers = async (): Promise<User[]> => {
+  try {
+    // Simulate API call with a delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Return only users with phone numbers
+    return MOCK_USERS.filter(user => user.isRegistered && user.phone);
+  } catch (error) {
+    console.error("Error fetching users with phone numbers:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    toast.error(`Failed to fetch users with phone numbers: ${errorMessage}`);
+    return [];
+  }
+};
+
+/**
+ * Get a user by ID
+ */
+export const getUserById = async (userId: string): Promise<User | null> => {
+  try {
+    // Simulate API call with a delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const user = MOCK_USERS.find(user => user.id === userId);
+    
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    return user;
+  } catch (error) {
+    console.error(`Error fetching user with ID ${userId}:`, error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    toast.error(`Failed to fetch user: ${errorMessage}`);
+    return null;
+  }
 };
