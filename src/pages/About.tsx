@@ -31,7 +31,7 @@ const About = () => {
   return (
     <Layout>
       {/* Hero */}
-      <div className="bg-enf-green text-white py-16">
+      <div className="bg-enf-green text-white py-16" data-aos="fade-down">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center">
             About the Esther Nyasuba Foundation
@@ -49,7 +49,7 @@ const About = () => {
       <div className="py-16 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg shadow-md">
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg shadow-md" data-aos="fade-right" data-aos-delay="100">
               <div className="flex items-center gap-3 mb-4">
                 <HeartHandshake className="h-8 w-8 text-enf-green dark:text-enf-light-green" />
                 <h2 className="text-2xl font-bold">Our Mission</h2>
@@ -59,7 +59,7 @@ const About = () => {
               </p>
             </div>
             
-            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg shadow-md">
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg shadow-md" data-aos="fade-left" data-aos-delay="200">
               <div className="flex items-center gap-3 mb-4">
                 <Lightbulb className="h-8 w-8 text-enf-green dark:text-enf-light-green" />
                 <h2 className="text-2xl font-bold">Our Vision</h2>
@@ -75,12 +75,14 @@ const About = () => {
       {/* Core Values */}
       <div className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-10 text-center">Our Core Values</h2>
+          <h2 className="text-3xl font-bold mb-10 text-center" data-aos="fade-up">Our Core Values</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((value, index) => (
               <div 
                 key={index} 
                 className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-center"
+                data-aos="zoom-in"
+                data-aos-delay={index * 100}
               >
                 <div className="flex justify-center mb-4">
                   {value.icon}
@@ -94,7 +96,7 @@ const About = () => {
       </div>
 
       {/* CTA */}
-      <div className="py-16 bg-white dark:bg-gray-900 text-center">
+      <div className="py-16 bg-white dark:bg-gray-900 text-center" data-aos="fade-up">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold mb-4">Be a Part of Our Mission</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">

@@ -67,7 +67,7 @@ const Gallery = () => {
   return (
     <Layout>
       {/* Hero */}
-      <div className="bg-enf-green text-white py-16">
+      <div className="bg-enf-green text-white py-16" data-aos="fade-down">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Gallery of Impact</h1>
           <p className="text-lg max-w-2xl mx-auto">
@@ -78,9 +78,9 @@ const Gallery = () => {
 
       {/* Gallery */}
       <div className="container mx-auto px-4 py-16">
-        <h2 className="text-2xl font-bold mb-8">Our Images</h2>
+        <h2 className="text-2xl font-bold mb-8" data-aos="fade-up">Our Images</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {galleryItems.map((item) => (
+          {galleryItems.map((item, index) => (
             <div 
               key={item.id} 
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
@@ -89,6 +89,8 @@ const Gallery = () => {
                 title: item.title,
                 description: item.description,
               })}
+              data-aos="fade-up"
+              data-aos-delay={index * 100}
             >
               <div className="h-48 bg-gray-200 dark:bg-gray-700">
                 <img 
@@ -109,9 +111,9 @@ const Gallery = () => {
 
         {/* Video Section */}
         <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-8">Video Highlights</h2>
+          <h2 className="text-2xl font-bold mb-8" data-aos="fade-up">Video Highlights</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden" data-aos="fade-right" data-aos-delay="100">
               <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                 <div className="text-center p-4">
                   <TreePine className="w-10 h-10 text-enf-green dark:text-enf-light-green mx-auto mb-2" />
@@ -126,7 +128,7 @@ const Gallery = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden" data-aos="fade-left" data-aos-delay="200">
               <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                 <div className="text-center p-4">
                   <ShieldCheck className="w-10 h-10 text-enf-green dark:text-enf-light-green mx-auto mb-2" />
@@ -144,7 +146,7 @@ const Gallery = () => {
         </div>
 
         {/* CTA */}
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center" data-aos="fade-up">
           <h2 className="text-2xl font-bold mb-4">Be Part of the Change</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
             Join us in making a difference. Volunteer or donate to support our cause.

@@ -73,7 +73,7 @@ const Contact = () => {
   return (
     <Layout>
       {/* Hero */}
-      <div className="bg-enf-green text-white py-12">
+      <div className="bg-enf-green text-white py-12" data-aos="fade-down">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-3xl font-bold mb-4">Contact Us</h1>
           <p className="text-lg max-w-2xl mx-auto">
@@ -86,7 +86,7 @@ const Contact = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6" data-aos="fade-right" data-aos-delay="100">
             <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -147,7 +147,7 @@ const Contact = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-8">
+          <div className="space-y-8" data-aos="fade-left" data-aos-delay="200">
             <div>
               <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
@@ -162,6 +162,8 @@ const Contact = () => {
                     target={item.action.startsWith("http") ? "_blank" : "_self"}
                     rel={item.action.startsWith("http") ? "noopener noreferrer" : ""}
                     className="flex items-start gap-3 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    data-aos="zoom-in"
+                    data-aos-delay={index * 100}
                   >
                     <div className="mt-1">{item.icon}</div>
                     <div>
@@ -173,7 +175,7 @@ const Contact = () => {
               </div>
             </div>
 
-            <div>
+            <div data-aos="fade-up" data-aos-delay="300">
               <h2 className="text-2xl font-bold mb-6">Find Us</h2>
               <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64 flex items-center justify-center">
                 <p className="text-gray-500 dark:text-gray-400">Map placeholder</p>
