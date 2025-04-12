@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Sun, Moon, Menu, X } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { useAuth } from "@/context/AuthContext";
@@ -13,10 +14,11 @@ interface NavbarProps {
 
 const Navbar = ({ minimal = false }: NavbarProps) => {
   const { theme, setTheme } = useTheme();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, isRegistered, logout, user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -48,6 +50,23 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
     { title: "Contact", path: "/contact" },
   ];
 
+  // Helper function to handle navigation with authentication checks
+  const handleNavigation = (path: string) => {
+    if (path === "/") return navigate(path);
+    
+    if (!isAuthenticated) {
+      navigate("/login");
+      return false;
+    }
+    
+    if (!isRegistered) {
+      navigate("/signup");
+      return false;
+    }
+    
+    return true;
+  };
+
   return (
     <header
       className={cn(
@@ -70,6 +89,15 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
                 <Link
                   key={item.path}
                   to={item.path}
+                  onClick={(e) => {
+                    if (item.path !== "/" && !isAuthenticated) {
+                      e.preventDefault();
+                      navigate("/login");
+                    } else if (item.path !== "/" && isAuthenticated && !isRegistered) {
+                      e.preventDefault();
+                      navigate("/signup");
+                    }
+                  }}
                   className={cn(
                     "text-sm font-medium transition-colors hover:text-enf-green dark:hover:text-enf-light-green",
                     location.pathname === item.path
@@ -81,19 +109,33 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
                 </Link>
               ))}
               {isAuthenticated ? (
-                <Button
-                  variant="ghost"
-                  onClick={logout}
-                  className="text-sm font-medium"
-                >
-                  Logout
-                </Button>
-              ) : (
-                <Link to="/login">
-                  <Button variant="outline" size="sm">
-                    Login
+                <div className="flex items-center gap-2">
+                  {user?.name && (
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      Hi, {user.name}
+                    </span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={logout}
+                    className="text-sm font-medium"
+                  >
+                    Logout
                   </Button>
-                </Link>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link to="/login">
+                    <Button variant="outline" size="sm">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button size="sm" className="bg-enf-green hover:bg-enf-dark-green">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
               )}
               <Button
                 variant="ghost"
@@ -164,6 +206,15 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={(e) => {
+                  if (item.path !== "/" && !isAuthenticated) {
+                    e.preventDefault();
+                    navigate("/login");
+                  } else if (item.path !== "/" && isAuthenticated && !isRegistered) {
+                    e.preventDefault();
+                    navigate("/signup");
+                  }
+                }}
                 className={cn(
                   "py-2 text-sm font-medium transition-colors hover:text-enf-green dark:hover:text-enf-light-green",
                   location.pathname === item.path
@@ -178,16 +229,23 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
               <Button
                 variant="ghost"
                 onClick={logout}
-                className="justify-start px-0 text-sm font-medium"
+                className="justify-start px-0 text-sm font-medium py-2"
               >
                 Logout
               </Button>
             ) : (
-              <Link to="/login" className="py-2">
-                <Button variant="outline" size="sm">
-                  Login
-                </Button>
-              </Link>
+              <div className="flex flex-col gap-2 py-2">
+                <Link to="/login">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button size="sm" className="w-full bg-enf-green hover:bg-enf-dark-green">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </div>
