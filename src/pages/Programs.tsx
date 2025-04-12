@@ -60,7 +60,7 @@ const Programs = () => {
     <Layout>
       {/* Header */}
       <div className="bg-enf-green text-white py-16">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center" data-aos="fade-down">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Our Programs</h1>
           <p className="text-lg max-w-2xl mx-auto">
             Empowering communities through diverse initiatives that create lasting impact.
@@ -71,10 +71,12 @@ const Programs = () => {
       {/* Programs */}
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          {programs.map((program) => (
+          {programs.map((program, index) => (
             <div 
               key={program.id}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              data-aos={index % 2 === 0 ? "fade-right" : "fade-left"}
+              data-aos-delay={100 * (index % 3)}
             >
               <div className="bg-gray-200 dark:bg-gray-700 h-48 flex items-center justify-center">
                 <img 
@@ -99,7 +101,7 @@ const Programs = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center" data-aos="fade-up">
           <h2 className="text-2xl font-bold mb-4">Transform Lives with Us</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
             Your support helps us expand and touch more lives. Every contribution counts.

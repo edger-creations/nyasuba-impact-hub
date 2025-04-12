@@ -38,8 +38,12 @@ export function ProgramsTable({ programs, onEdit, onDelete }: ProgramsTableProps
             </TableCell>
           </TableRow>
         ) : (
-          programs.map((program) => (
-            <TableRow key={program.id}>
+          programs.map((program, index) => (
+            <TableRow 
+              key={program.id}
+              data-aos="fade-up"
+              data-aos-delay={index * 50}
+            >
               <TableCell>
                 {program.image && program.image !== "/placeholder.svg" ? (
                   <img 

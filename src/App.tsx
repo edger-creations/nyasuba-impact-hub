@@ -6,7 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 // Pages
 import Home from "./pages/Home";
@@ -36,6 +38,15 @@ import AdminUsers from "./pages/admin/Users";
 import AdminEvents from "./pages/admin/Events";
 
 const App = () => {
+  // Initialize AOS
+  useEffect(() => {
+    AOS.init({
+      duration: 800,
+      once: false,
+      mirror: true,
+    });
+  }, []);
+
   // Create a new QueryClient instance inside the component
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {

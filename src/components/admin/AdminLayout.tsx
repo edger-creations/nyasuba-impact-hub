@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import AdminSidebar from "./AdminSidebar";
+import { useAOSRefresh } from "@/hooks/useAOSRefresh";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,9 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { user, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+  
+  // Use our custom hook to refresh AOS animations on route changes
+  useAOSRefresh();
 
   useEffect(() => {
     // Check if user is authenticated and is an admin
@@ -37,7 +41,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <AdminSidebar />
       <div className="flex-1 overflow-auto">
-        <main>{children}</main>
+        <main data-aos="fade">
+          {children}
+        </main>
       </div>
     </div>
   );

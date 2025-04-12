@@ -11,14 +11,14 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative min-h-[600px] w-full hero-pattern flex items-center justify-center">
         <div className="container mx-auto px-4 z-10 flex justify-center items-center">
-          <div className="max-w-3xl text-center">
+          <div className="max-w-3xl text-center" data-aos="fade-up" data-aos-delay="100">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Welcome to the Esther Nyasuba Foundation
             </h1>
             <p className="text-xl mb-8 text-gray-600 dark:text-gray-300">
               Empowering communities, uplifting lives, and creating lasting change.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4" data-aos="fade-up" data-aos-delay="200">
               <Link to="/volunteer">
                 <Button className="bg-enf-green text-white hover:bg-enf-dark-green">
                   Join Our Membership
@@ -38,10 +38,14 @@ const Home = () => {
       <section className="py-16 bg-white dark:bg-gray-900">
         <div className="container px-4 mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className={cn(
-              "bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-md",
-              "transform transition-all hover:-translate-y-1 hover:shadow-lg"
-            )}>
+            <div 
+              className={cn(
+                "bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-md",
+                "transform transition-all hover:-translate-y-1 hover:shadow-lg"
+              )}
+              data-aos="fade-right"
+              data-aos-delay="100"
+            >
               <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <HeartHandshake className="text-enf-green dark:text-enf-light-green h-6 w-6" />
                 Our Mission
@@ -51,10 +55,14 @@ const Home = () => {
               </p>
             </div>
 
-            <div className={cn(
-              "bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-md",
-              "transform transition-all hover:-translate-y-1 hover:shadow-lg"
-            )}>
+            <div 
+              className={cn(
+                "bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-md",
+                "transform transition-all hover:-translate-y-1 hover:shadow-lg"
+              )}
+              data-aos="fade-left"
+              data-aos-delay="200"
+            >
               <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                 <Lightbulb className="text-enf-green dark:text-enf-light-green h-6 w-6" />
                 Our Vision
@@ -70,8 +78,8 @@ const Home = () => {
       {/* Programs Section */}
       <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container px-4 mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-2">Programs That Make a Difference</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold mb-2" data-aos="fade-up">Programs That Make a Difference</h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">
             Join us in our mission to build shelter, empower women, educate the youth, and protect the environment.
           </p>
           
@@ -97,6 +105,8 @@ const Home = () => {
               <div 
                 key={index}
                 className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                data-aos="flip-up"
+                data-aos-delay={100 * index}
               >
                 <div className="flex justify-center mb-4">
                   {program.icon}
@@ -107,7 +117,7 @@ const Home = () => {
             ))}
           </div>
           
-          <Link to="/programs">
+          <Link to="/programs" data-aos="zoom-in" data-aos-delay="300">
             <Button variant="outline" className="flex items-center gap-2 border-enf-green text-enf-green hover:bg-enf-green/10 dark:border-enf-light-green dark:text-enf-light-green dark:hover:bg-enf-light-green/10">
               Learn More
               <ArrowRight className="h-4 w-4" />

@@ -66,7 +66,7 @@ const Reviews = () => {
     <Layout>
       {/* Hero */}
       <div className="bg-enf-green text-white py-12">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center" data-aos="fade-down">
           <h1 className="text-3xl font-bold mb-4">What People Say About Us</h1>
           <p className="text-lg max-w-2xl mx-auto">
             Your feedback and experiences drive our mission forward. Here are stories from those who have partnered with or benefited from the Esther Nyasuba Foundation.
@@ -77,10 +77,12 @@ const Reviews = () => {
       {/* Testimonials */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((testimonial) => (
+          {testimonials.map((testimonial, index) => (
             <div 
               key={testimonial.id} 
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 relative"
+              data-aos="fade-up"
+              data-aos-delay={index * 100}
             >
               <QuoteIcon className="absolute top-4 right-4 h-6 w-6 text-gray-200 dark:text-gray-700" />
               <div className="flex items-center gap-3 mb-4">
@@ -101,7 +103,7 @@ const Reviews = () => {
         </div>
 
         {/* Review Form */}
-        <div className="mt-16 max-w-2xl mx-auto">
+        <div className="mt-16 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="200">
           <h2 className="text-2xl font-bold mb-6">Share Your Experience</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
             Have you volunteered or benefited from our programs? We'd love to hear from you!

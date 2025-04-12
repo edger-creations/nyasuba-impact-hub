@@ -56,7 +56,7 @@ const Volunteer = () => {
     <Layout>
       {/* Hero */}
       <div className="bg-enf-green text-white py-16">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center" data-aos="fade-down">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">Volunteer with Us</h1>
           <p className="text-lg max-w-2xl mx-auto">
             Join the Esther Nyasuba Foundation in creating positive change. Your time, skills, and dedication can uplift communities and transform lives. Explore the various volunteering opportunities and become part of something bigger.
@@ -70,12 +70,14 @@ const Volunteer = () => {
       {/* Volunteer Opportunities */}
       <div className="py-16 bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8 text-center">Ways to Volunteer</h2>
+          <h2 className="text-2xl font-bold mb-8 text-center" data-aos="fade-up">Ways to Volunteer</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {volunteerOpportunities.map((opportunity, index) => (
               <div 
                 key={index} 
                 className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow text-center"
+                data-aos="flip-left"
+                data-aos-delay={index * 100}
               >
                 <div className="flex justify-center mb-4">
                   {opportunity.icon}
@@ -93,12 +95,14 @@ const Volunteer = () => {
       {/* Benefits */}
       <div className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8 text-center">Why Volunteer?</h2>
+          <h2 className="text-2xl font-bold mb-8 text-center" data-aos="fade-up">Why Volunteer?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {benefits.map((benefit, index) => (
               <div 
                 key={index} 
                 className="flex items-start gap-3"
+                data-aos="fade-right"
+                data-aos-delay={index * 50}
               >
                 <div className="mt-1 text-enf-green dark:text-enf-light-green">
                   <svg
@@ -123,7 +127,7 @@ const Volunteer = () => {
 
       {/* CTA */}
       <div className="py-16 bg-white dark:bg-gray-900 text-center">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4" data-aos="zoom-in">
           <h2 className="text-2xl font-bold mb-4">Ready to Get Involved?</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             Fill out our volunteer application form and we'll reach out with next steps.
