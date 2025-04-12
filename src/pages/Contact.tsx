@@ -180,11 +180,21 @@ const Contact = () => {
             <div data-aos="fade-up" data-aos-delay="500">
               <h2 className="text-2xl font-bold mb-6">Find Us</h2>
               <div 
-                className="bg-gray-200 dark:bg-gray-700 rounded-lg h-64 flex items-center justify-center"
+                className="bg-gray-200 dark:bg-gray-700 rounded-lg h-[400px] overflow-hidden"
                 data-aos="zoom-in" 
                 data-aos-delay="600"
               >
-                <p className="text-gray-500 dark:text-gray-400">Map placeholder</p>
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3875.819021160041!2d36.82194631532103!3d-1.2863899359866997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMsKwMTcnMDAuOCJTIDM2wrA0OCcwMC45IkU!5e0!3m2!1sen!2ske!4v1625319638654!5m2!1sen!2ske" 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }}
+                  allowFullScreen 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Esther Nyasuba Foundation Location"
+                  className="rounded-lg"
+                ></iframe>
               </div>
             </div>
           </div>
