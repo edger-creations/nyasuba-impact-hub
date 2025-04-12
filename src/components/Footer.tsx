@@ -1,6 +1,5 @@
-
 import { Link } from "react-router-dom";
-import PentagonLogo from "./PentagonLogo";
+import Logo from "./Logo";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -11,10 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <PentagonLogo />
-              <span className="font-semibold text-lg">
-                Esther Nyasuba Foundation
-              </span>
+              <Logo size={40} showText={true} />
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
               Empowering communities, uplifting lives, and creating lasting change through various initiatives.

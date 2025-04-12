@@ -33,13 +33,13 @@ const About = () => {
       {/* Hero */}
       <div className="bg-enf-green text-white py-16" data-aos="fade-down">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center" data-aos="fade-up" data-aos-delay="100">
             About the Esther Nyasuba Foundation
           </h1>
-          <p className="text-lg max-w-3xl mx-auto text-center">
+          <p className="text-lg max-w-3xl mx-auto text-center" data-aos="fade-up" data-aos-delay="200">
             The Esther Nyasuba Foundation is dedicated to supporting the underprivileged in our society. Through initiatives like building shelters, financing education, tree planting, and empowering women, we aim to create lasting change and uplift communities.
           </p>
-          <p className="text-lg max-w-3xl mx-auto mt-4 text-center">
+          <p className="text-lg max-w-3xl mx-auto mt-4 text-center" data-aos="fade-up" data-aos-delay="300">
             Our journey is driven by compassion and guided by faith, ensuring that we make a difference one step at a time. Together, we can nurture hope and empower lives.
           </p>
         </div>
@@ -102,7 +102,7 @@ const About = () => {
           <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             Join us in making a meaningful impact. Volunteer, donate, or spread the word.
           </p>
-          <Link to="/volunteer">
+          <Link to="/volunteer" data-aos="zoom-in" data-aos-delay="100">
             <Button className="bg-enf-green hover:bg-enf-dark-green text-white">
               Get Involved
             </Button>

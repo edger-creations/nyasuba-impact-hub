@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Sun, Moon, Menu, X } from "lucide-react";
@@ -6,7 +5,7 @@ import { useTheme } from "./ThemeProvider";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import PentagonLogo from "./PentagonLogo";
+import Logo from "./Logo";
 
 interface NavbarProps {
   minimal?: boolean;
@@ -60,12 +59,7 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
     >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <PentagonLogo />
-          {!minimal && (
-            <span className="font-semibold text-lg hidden sm:inline">
-              Esther Nyasuba Foundation
-            </span>
-          )}
+          <Logo size={40} showText={!minimal} />
         </Link>
 
         {!minimal ? (
