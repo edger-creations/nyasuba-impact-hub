@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,9 +52,9 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
-      await signup(formData.fullName, formData.email, formData.password);
+      await signup(formData.fullName, formData.email, formData.password, navigate);
       toast.success("Account created successfully!");
-      navigate("/");
+      // No need to navigate here as signup function will do it
     } catch (error) {
       toast.error("Registration failed. Please try again.");
       console.error("Signup error:", error);

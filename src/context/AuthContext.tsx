@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { NavigateFunction } from "react-router-dom";
 
 type User = {
   id: string;
@@ -15,9 +15,9 @@ type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isRegistered: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string, navigate: NavigateFunction) => Promise<void>;
+  signup: (name: string, email: string, password: string, navigate: NavigateFunction) => Promise<void>;
+  logout: (navigate: NavigateFunction) => void;
   loading: boolean;
 };
 
@@ -26,7 +26,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is stored in localStorage
@@ -37,7 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, navigate: NavigateFunction) => {
     setLoading(true);
     try {
       // This is a mock login that would be replaced with a real API call
@@ -77,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, navigate: NavigateFunction) => {
     setLoading(true);
     try {
       // Mock signup, would be replaced with actual API call
@@ -102,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
+  const logout = (navigate: NavigateFunction) => {
     setUser(null);
     localStorage.removeItem("enf-user");
     navigate("/login"); // Always redirect to login page after logout

@@ -49,9 +49,9 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
-      await login(values.email, values.password);
+      await login(values.email, values.password, navigate);
       toast.success("Login successful!");
-      navigate(redirectUrl);
+      // No need to navigate here as login function will do it
     } catch (error) {
       toast.error("Login failed. Please check your credentials and try again.");
       console.error("Login error:", error);
@@ -69,10 +69,10 @@ const Login = () => {
       const adminPassword = "Elly@12345@2024#";
       
       // Call the normal login function with admin credentials
-      await login(adminEmail, adminPassword);
+      await login(adminEmail, adminPassword, navigate);
       
       toast.success("Admin login successful!");
-      navigate("/admin/dashboard");
+      // No need to navigate here as login function will do it
     } catch (error) {
       toast.error("Admin login failed. Please try again.");
       console.error("Admin login error:", error);

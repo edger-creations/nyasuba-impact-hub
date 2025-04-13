@@ -1,5 +1,5 @@
 
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { ReactNode } from "react";
@@ -17,6 +17,7 @@ const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isRegistered, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Always allow access to the home page
   if (location.pathname === "/") {

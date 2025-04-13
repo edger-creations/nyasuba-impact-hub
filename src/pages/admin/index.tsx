@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 const AdminIndex = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, logout } = useAuth();
 
   useEffect(() => {
     if (!loading) {
