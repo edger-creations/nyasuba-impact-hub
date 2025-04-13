@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -10,59 +10,119 @@ import {
   DialogHeader,
   DialogTitle, 
 } from "@/components/ui/dialog";
-import { TreePine, Users, ShieldCheck, Home, Hammer, BookOpen } from "lucide-react";
+import { TreePine, Users, ShieldCheck, Home, Hammer, BookOpen, Image, Video } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Define the gallery item interface to match the admin page
+interface GalleryItem {
+  id: string;
+  type: "image" | "video";
+  src: string;
+  alt: string;
+  description: string;
+  featured: boolean;
+  category?: string;
+}
 
 const Gallery = () => {
-  const [selectedImage, setSelectedImage] = useState<{
-    src: string;
-    title: string;
-    description: string;
-  } | null>(null);
+  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("all");
 
-  const galleryItems = [
-    {
-      id: 1,
-      title: "Volunteering In Schools",
-      description: "Sometimes, it only requires minutes of our time to leave remarkable smiles in the face of humanity. Madam Esther Volunteered to help students with Creative Arts at a local school in Kenya.",
-      image: "/placeholder.svg",
-      category: "education",
-    },
-    {
-      id: 2,
-      title: "Shelter For The Homeless",
-      description: "During floods in Kenya, 2024, most people lost their homes. We could not do enough but with the little we had, we built some few shelters for those in need. I believe if we all join hands in support of such initiatives, we will all make a big change for humanity.",
-      image: "/placeholder.svg",
-      category: "shelter",
-    },
-    {
-      id: 3,
-      title: "Women & Community Empowerment",
-      description: "What if we teach them how to catch fish? For this reason, you have an opportunity to volunteer or even support ENF in empowering and educating the women and community at large on how to go about their livelihood.",
-      image: "/placeholder.svg",
-      category: "empowerment",
-    },
-    {
-      id: 4,
-      title: "Relief Food To The Needy",
-      description: "There are some of us who have hardship having all or even all meals a day. Your relief food donations give them strength and hope of living.",
-      image: "/placeholder.svg",
-      category: "food",
-    },
-    {
-      id: 5,
-      title: "Mobility Assistance To Disabled",
-      description: "It is our happiness to experience happiness with all humanity, including the disabled. We should always make them part of us!",
-      image: "/placeholder.svg",
-      category: "mobility",
-    },
-    {
-      id: 6,
-      title: "Tree Planting",
-      description: "Our tree planting initiatives help combat climate change while creating sustainable green spaces for future generations.",
-      image: "/placeholder.svg",
-      category: "environment",
-    },
-  ];
+  // Fetch gallery items from localStorage on component mount
+  useEffect(() => {
+    const storedItems = localStorage.getItem('galleryItems');
+    
+    if (storedItems) {
+      setGalleryItems(JSON.parse(storedItems));
+    } else {
+      // Fallback to default items if nothing in localStorage
+      setGalleryItems([
+        {
+          id: "1",
+          type: "image",
+          src: "/placeholder.svg",
+          alt: "Volunteering In Schools",
+          description: "Sometimes, it only requires minutes of our time to leave remarkable smiles in the face of humanity. Madam Esther Volunteered to help students with Creative Arts at a local school in Kenya.",
+          featured: false,
+          category: "education",
+        },
+        {
+          id: "2",
+          type: "image",
+          src: "/placeholder.svg",
+          alt: "Shelter For The Homeless",
+          description: "During floods in Kenya, 2024, most people lost their homes. We could not do enough but with the little we had, we built some few shelters for those in need. I believe if we all join hands in support of such initiatives, we will all make a big change for humanity.",
+          featured: false,
+          category: "shelter",
+        },
+        {
+          id: "3",
+          type: "image",
+          src: "/placeholder.svg",
+          alt: "Women & Community Empowerment",
+          description: "What if we teach them how to catch fish? For this reason, you have an opportunity to volunteer or even support ENF in empowering and educating the women and community at large on how to go about their livelihood.",
+          featured: false,
+          category: "empowerment",
+        },
+        {
+          id: "4",
+          type: "image",
+          src: "/placeholder.svg",
+          alt: "Relief Food To The Needy",
+          description: "There are some of us who have hardship having all or even all meals a day. Your relief food donations give them strength and hope of living.",
+          featured: false,
+          category: "food",
+        },
+        {
+          id: "5",
+          type: "image",
+          src: "/placeholder.svg",
+          alt: "Mobility Assistance To Disabled",
+          description: "It is our happiness to experience happiness with all humanity, including the disabled. We should always make them part of us!",
+          featured: false,
+          category: "mobility",
+        },
+        {
+          id: "6",
+          type: "image",
+          src: "/placeholder.svg",
+          alt: "Tree Planting",
+          description: "Our tree planting initiatives help combat climate change while creating sustainable green spaces for future generations.",
+          featured: false,
+          category: "environment",
+        },
+        {
+          id: "7",
+          type: "video",
+          src: "/placeholder.svg",
+          alt: "Tree Planting",
+          description: "We plant trees to save lives and save the future, it is a gospel that is underrated but saves humanity a lot. Plant a tree to save lives.",
+          featured: false,
+          category: "environment",
+        },
+        {
+          id: "8",
+          type: "video",
+          src: "/placeholder.svg",
+          alt: "Environment Conservation",
+          description: "Our tree planting initiatives help combat climate change while creating sustainable green spaces for future generations.",
+          featured: false,
+          category: "environment",
+        },
+      ]);
+    }
+  }, []);
+
+  // Get featured item for the hero section
+  const featuredItem = galleryItems.find(item => item.featured) || galleryItems[0];
+  
+  // Filter items based on active tab
+  const filteredItems = activeTab === "all" 
+    ? galleryItems
+    : activeTab === "images" 
+      ? galleryItems.filter(item => item.type === "image")
+      : galleryItems.filter(item => item.type === "video");
 
   return (
     <Layout>
@@ -73,76 +133,84 @@ const Gallery = () => {
           <p className="text-lg max-w-2xl mx-auto">
             Capturing moments that define our journey and community transformation.
           </p>
+          {featuredItem && (
+            <div className="mt-8 max-w-4xl mx-auto bg-white/10 p-4 rounded-lg">
+              <p className="text-sm uppercase tracking-wide mb-2">Featured</p>
+              <h2 className="text-xl font-semibold mb-2">{featuredItem.alt}</h2>
+              <p className="text-sm mb-4">{featuredItem.description}</p>
+              <Button 
+                variant="outline" 
+                className="border-white text-white hover:bg-white/20"
+                onClick={() => setSelectedItem(featuredItem)}
+              >
+                View Featured {featuredItem.type === "image" ? "Image" : "Video"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Gallery */}
       <div className="container mx-auto px-4 py-16">
-        <h2 className="text-2xl font-bold mb-8" data-aos="fade-up">Our Images</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {galleryItems.map((item, index) => (
-            <div 
-              key={item.id} 
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => setSelectedImage({
-                src: item.image,
-                title: item.title,
-                description: item.description,
-              })}
-              data-aos="fade-up"
-              data-aos-delay={index * 100}
-            >
-              <div className="h-48 bg-gray-200 dark:bg-gray-700">
-                <img 
-                  src={item.image} 
-                  alt={item.title} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                  {item.description}
-                </p>
-              </div>
-            </div>
-          ))}
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold" data-aos="fade-up">Our Gallery</h2>
+          <Tabs defaultValue="all" onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
+              <TabsTrigger value="videos">Videos</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-
-        {/* Video Section */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-8" data-aos="fade-up">Video Highlights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden" data-aos="fade-right" data-aos-delay="100">
-              <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                <div className="text-center p-4">
-                  <TreePine className="w-10 h-10 text-enf-green dark:text-enf-light-green mx-auto mb-2" />
-                  <p className="text-gray-500 dark:text-gray-400">Video placeholder</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredItems.length === 0 ? (
+            <div className="col-span-full text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <p className="text-muted-foreground">No items found in this category.</p>
+            </div>
+          ) : (
+            filteredItems.map((item, index) => (
+              <div 
+                key={item.id} 
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setSelectedItem(item)}
+                data-aos="fade-up"
+                data-aos-delay={index * 100}
+              >
+                <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                  {item.type === "image" ? (
+                    <img 
+                      src={item.src} 
+                      alt={item.alt} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="relative w-full h-full">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Video className="h-12 w-12 text-white/75" />
+                      </div>
+                      <img 
+                        src={item.src} 
+                        alt={item.alt} 
+                        className="w-full h-full object-cover opacity-80"
+                      />
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2">
+                    <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                      {item.type}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg mb-1">{item.alt}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
+                    {item.description}
+                  </p>
                 </div>
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-1">Tree Planting</h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  We plant trees to save lives and save the future, it is a gospel that is underrated but saves humanity a lot. Plant a tree to save lives.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden" data-aos="fade-left" data-aos-delay="200">
-              <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                <div className="text-center p-4">
-                  <ShieldCheck className="w-10 h-10 text-enf-green dark:text-enf-light-green mx-auto mb-2" />
-                  <p className="text-gray-500 dark:text-gray-400">Video placeholder</p>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-1">Environment Conservation</h3>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Our tree planting initiatives help combat climate change while creating sustainable green spaces for future generations.
-                </p>
-              </div>
-            </div>
-          </div>
+            ))
+          )}
         </div>
 
         {/* CTA */}
@@ -166,20 +234,28 @@ const Gallery = () => {
         </div>
       </div>
 
-      {/* Image Modal */}
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      {/* Item Modal */}
+      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{selectedImage?.title}</DialogTitle>
-            <DialogDescription>{selectedImage?.description}</DialogDescription>
+            <DialogTitle>{selectedItem?.alt}</DialogTitle>
+            <DialogDescription>{selectedItem?.description}</DialogDescription>
           </DialogHeader>
-          {selectedImage && (
+          {selectedItem && (
             <div className="mt-4">
-              <img 
-                src={selectedImage.src} 
-                alt={selectedImage.title} 
-                className="w-full rounded-md"
-              />
+              {selectedItem.type === "image" ? (
+                <img 
+                  src={selectedItem.src} 
+                  alt={selectedItem.alt} 
+                  className="w-full rounded-md"
+                />
+              ) : (
+                <video
+                  src={selectedItem.src}
+                  controls
+                  className="w-full rounded-md"
+                />
+              )}
             </div>
           )}
         </DialogContent>

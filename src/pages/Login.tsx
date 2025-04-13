@@ -60,27 +60,6 @@ const Login = () => {
     }
   };
 
-  // Admin login with updated credentials
-  const handleAdminLogin = async () => {
-    setIsSubmitting(true);
-    try {
-      // Updated admin credentials as specified
-      const adminEmail = "admin@esthernyasubafoundation.org";
-      const adminPassword = "Elly@12345@2024#";
-      
-      // Call the normal login function with admin credentials
-      await login(adminEmail, adminPassword, navigate);
-      
-      toast.success("Admin login successful!");
-      // No need to navigate here as login function will do it
-    } catch (error) {
-      toast.error("Admin login failed. Please try again.");
-      console.error("Admin login error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px-200px)] py-12">
@@ -158,21 +137,6 @@ const Login = () => {
                   Sign up
                 </Link>
               </p>
-            </div>
-            
-            {/* Admin login button - for demo purposes only */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-4">
-                For demo purposes:
-              </p>
-              <Button 
-                variant="outline"
-                className="w-full border-enf-green text-enf-green hover:bg-enf-green/10 dark:border-enf-light-green dark:text-enf-light-green"
-                onClick={handleAdminLogin}
-                disabled={isSubmitting}
-              >
-                Login as Admin
-              </Button>
             </div>
           </div>
         </div>
