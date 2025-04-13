@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { TreePine, Users, ShieldCheck, Home, Hammer, BookOpen, Image, Video } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Define the gallery item interface to match the admin page
 interface GalleryItem {
@@ -134,18 +136,48 @@ const Gallery = () => {
             Capturing moments that define our journey and community transformation.
           </p>
           {featuredItem && (
-            <div className="mt-8 max-w-4xl mx-auto bg-white/10 p-4 rounded-lg">
-              <p className="text-sm uppercase tracking-wide mb-2">Featured</p>
-              <h2 className="text-xl font-semibold mb-2">{featuredItem.alt}</h2>
-              <p className="text-sm mb-4">{featuredItem.description}</p>
-              <Button 
-                variant="outline" 
-                className="border-white text-white hover:bg-white/20"
-                onClick={() => setSelectedItem(featuredItem)}
-              >
-                View Featured {featuredItem.type === "image" ? "Image" : "Video"}
-              </Button>
-            </div>
+            <Card className="mt-8 max-w-4xl mx-auto bg-white/10 overflow-hidden">
+              <CardHeader className="pb-2">
+                <p className="text-sm uppercase tracking-wide">Featured</p>
+                <CardTitle className="text-xl">{featuredItem.alt}</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <div className="max-h-[300px] overflow-hidden rounded-md">
+                  {featuredItem.type === "image" ? (
+                    <AspectRatio ratio={16 / 9} className="bg-muted">
+                      <img 
+                        src={featuredItem.src} 
+                        alt={featuredItem.alt} 
+                        className="w-full h-full object-cover"
+                      />
+                    </AspectRatio>
+                  ) : (
+                    <AspectRatio ratio={16 / 9} className="bg-muted">
+                      <div className="w-full h-full relative">
+                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                          <Video className="h-12 w-12 text-white/75" />
+                        </div>
+                        <img 
+                          src={featuredItem.src} 
+                          alt={featuredItem.alt} 
+                          className="w-full h-full object-cover opacity-80"
+                        />
+                      </div>
+                    </AspectRatio>
+                  )}
+                </div>
+                <p className="text-sm mt-4">{featuredItem.description}</p>
+              </CardContent>
+              <CardFooter className="pt-0">
+                <Button 
+                  variant="outline" 
+                  className="border-white text-white hover:bg-white/20"
+                  onClick={() => setSelectedItem(featuredItem)}
+                >
+                  View Featured {featuredItem.type === "image" ? "Image" : "Video"}
+                </Button>
+              </CardFooter>
+            </Card>
           )}
         </div>
       </div>
@@ -244,17 +276,21 @@ const Gallery = () => {
           {selectedItem && (
             <div className="mt-4">
               {selectedItem.type === "image" ? (
-                <img 
-                  src={selectedItem.src} 
-                  alt={selectedItem.alt} 
-                  className="w-full rounded-md"
-                />
+                <AspectRatio ratio={16 / 9} className="bg-muted overflow-hidden rounded-md">
+                  <img 
+                    src={selectedItem.src} 
+                    alt={selectedItem.alt} 
+                    className="w-full h-full object-contain"
+                  />
+                </AspectRatio>
               ) : (
-                <video
-                  src={selectedItem.src}
-                  controls
-                  className="w-full rounded-md"
-                />
+                <AspectRatio ratio={16 / 9} className="bg-muted overflow-hidden rounded-md">
+                  <video
+                    src={selectedItem.src}
+                    controls
+                    className="w-full h-full object-contain"
+                  />
+                </AspectRatio>
               )}
             </div>
           )}
