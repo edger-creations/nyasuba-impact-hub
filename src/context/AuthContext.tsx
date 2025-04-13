@@ -1,7 +1,6 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { NavigateFunction } from "react-router-dom";
 
 type User = {
   id: string;
@@ -15,9 +14,9 @@ type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isRegistered: boolean;
-  login: (email: string, password: string, navigate: NavigateFunction) => Promise<void>;
-  signup: (name: string, email: string, password: string, navigate: NavigateFunction) => Promise<void>;
-  logout: (navigate: NavigateFunction) => void;
+  login: (email: string, password: string, navigate: (path: string) => void) => Promise<void>;
+  signup: (name: string, email: string, password: string, navigate: (path: string) => void) => Promise<void>;
+  logout: (navigate: (path: string) => void) => void;
   loading: boolean;
 };
 
@@ -36,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string, navigate: NavigateFunction) => {
+  const login = async (email: string, password: string, navigate: (path: string) => void) => {
     setLoading(true);
     try {
       // This is a mock login that would be replaced with a real API call
@@ -49,14 +48,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // For demo purposes, we're treating some emails as registered users
       const registeredEmails = ["john.doe@example.com", "registered@example.com", "admin@esthernyasubafoundation.org"];
-      const isRegistered = registeredEmails.includes(email);
       
+      // Important fix: Mark ALL users as registered by default unless explicitly set otherwise
+      // This ensures that regular users don't get redirected to signup after login
       const mockUser = {
-        id: isAdmin ? "admin-123" : "user-123",
+        id: isAdmin ? "admin-123" : "user-" + Date.now(),
         name: isAdmin ? "Administrator" : email.split("@")[0],
         email,
         isAdmin: isAdmin,
-        isRegistered: isRegistered,
+        isRegistered: true, // Mark all users as registered by default
       };
       
       setUser(mockUser);
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string, navigate: NavigateFunction) => {
+  const signup = async (name: string, email: string, password: string, navigate: (path: string) => void) => {
     setLoading(true);
     try {
       // Mock signup, would be replaced with actual API call
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = (navigate: NavigateFunction) => {
+  const logout = (navigate: (path: string) => void) => {
     setUser(null);
     localStorage.removeItem("enf-user");
     navigate("/login"); // Always redirect to login page after logout

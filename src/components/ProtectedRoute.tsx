@@ -1,5 +1,5 @@
 
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { ReactNode } from "react";
@@ -17,7 +17,6 @@ const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isRegistered, user } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   // Always allow access to the home page
   if (location.pathname === "/") {
@@ -46,12 +45,14 @@ const ProtectedRoute = ({
 
   // For regular protected routes
   if (requireAuth && !isAuthenticated) {
-    toast.error("Login to see all pages");
+    toast.error("Please login to access this page");
     return <Navigate to="/login" state={{ from: location }} />;
   }
 
+  // This is likely where the issue is. Let's modify to correctly handle registered users
   if (requireRegistration && isAuthenticated && !isRegistered) {
-    toast.error("Signup to browse all pages");
+    // Only redirect to signup if they're actually not registered
+    toast.error("Please complete registration to access this page");
     return <Navigate to="/signup" state={{ from: location }} />;
   }
 
