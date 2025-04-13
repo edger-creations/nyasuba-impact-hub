@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,12 +81,44 @@ const GalleryAdmin = () => {
     alt: "",
     description: "",
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Create a preview URL for the image
+      const previewUrl = URL.createObjectURL(file);
+      setNewImage({
+        ...newImage,
+        src: previewUrl
+      });
+      toast.success("Image uploaded for preview");
+    }
+  };
+  
+  const handleClickUpload = () => {
+    // Trigger the hidden file input
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
   
   const handleAddImage = () => {
+    // Validate the form
+    if (!newImage.src) {
+      toast.error("Please upload an image");
+      return;
+    }
+    
+    if (!newImage.alt || !newImage.description) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
     // In a real app, you would upload the file to a server
     const image = {
       id: Date.now().toString(),
-      src: newImage.src || "/placeholder.svg", // Use placeholder for demo
+      src: newImage.src,
       alt: newImage.alt,
       description: newImage.description,
       featured: false,
@@ -156,25 +188,48 @@ const GalleryAdmin = () => {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="image">Image</Label>
-                  <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:border-enf-green">
-                    <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Click to upload or drag and drop
-                    </p>
+                  <div 
+                    className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:border-enf-green"
+                    onClick={handleClickUpload}
+                  >
+                    {newImage.src ? (
+                      <div className="w-full relative">
+                        <img 
+                          src={newImage.src} 
+                          alt="Preview" 
+                          className="w-full h-48 object-cover rounded-md"
+                        />
+                        <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute top-2 right-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNewImage({...newImage, src: ""});
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = "";
+                            }
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Click to upload or drag and drop
+                        </p>
+                      </>
+                    )}
+                    
                     <Input
                       id="image"
                       type="file"
                       className="hidden"
                       accept="image/*"
-                      onChange={(e) => {
-                        // In a real app, this would handle the file upload
-                        if (e.target.files?.[0]) {
-                          setNewImage({
-                            ...newImage,
-                            src: URL.createObjectURL(e.target.files[0]),
-                          });
-                        }
-                      }}
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
                     />
                   </div>
                 </div>
@@ -203,7 +258,7 @@ const GalleryAdmin = () => {
                 </Button>
                 <Button 
                   onClick={handleAddImage}
-                  disabled={!newImage.alt || !newImage.description}
+                  disabled={!newImage.src || !newImage.alt || !newImage.description}
                   className="bg-enf-green hover:bg-enf-dark-green"
                 >
                   Add Image
@@ -236,7 +291,7 @@ const GalleryAdmin = () => {
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{image.description}</p>
               </CardContent>
               <CardFooter className="p-4 pt-0 flex justify-between">
-                <div>
+                <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -253,7 +308,7 @@ const GalleryAdmin = () => {
                     <Trash className="h-4 w-4" />
                   </Button>
                 </div>
-                <div>
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="icon"

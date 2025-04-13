@@ -43,8 +43,8 @@ export function EventCard({ event, onEdit, onDelete, onNotify }: EventCardProps)
         <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
         <p className="text-sm font-medium">Location: {event.location}</p>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <div className="flex gap-2">
+      <CardFooter className="flex flex-col gap-3">
+        <div className="flex w-full justify-center gap-3">
           <Button 
             variant="outline" 
             size="sm" 
@@ -83,7 +83,7 @@ export function EventCard({ event, onEdit, onDelete, onNotify }: EventCardProps)
         <Button 
           variant="outline" 
           size="sm" 
-          className="text-blue-500"
+          className="text-blue-500 hover:text-blue-700 w-full"
           onClick={() => onNotify(event)}
         >
           <Send className="h-4 w-4 mr-1" /> Notify Users

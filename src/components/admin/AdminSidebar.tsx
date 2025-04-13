@@ -12,8 +12,7 @@ const AdminSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    logout(navigate);
   };
 
   const menuItems = [

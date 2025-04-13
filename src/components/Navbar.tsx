@@ -67,6 +67,11 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
     return true;
   };
 
+  // Handle logout correctly
+  const handleLogout = () => {
+    logout(navigate);
+  };
+
   return (
     <header
       className={cn(
@@ -117,7 +122,7 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
                   )}
                   <Button
                     variant="ghost"
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="text-sm font-medium"
                   >
                     Logout
@@ -228,7 +233,7 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
             {isAuthenticated ? (
               <Button
                 variant="ghost"
-                onClick={logout}
+                onClick={handleLogout}
                 className="justify-start px-0 text-sm font-medium py-2"
               >
                 Logout
