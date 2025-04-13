@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 
-// Define a more comprehensive gallery item type to include both images and videos
 interface GalleryItem {
   id: string;
   type: "image" | "video";
@@ -40,7 +38,6 @@ interface GalleryItem {
   category?: string;
 }
 
-// Mock gallery data - in a real app, these would come from an API
 const initialGalleryItems: GalleryItem[] = [
   {
     id: "1",
@@ -99,7 +96,7 @@ const initialGalleryItems: GalleryItem[] = [
   {
     id: "7",
     type: "video",
-    src: "/placeholder.svg", // would be a video URL in a real app
+    src: "/placeholder.svg",
     alt: "Tree Planting",
     description: "We plant trees to save lives and save the future, it is a gospel that is underrated but saves humanity a lot. Plant a tree to save lives.",
     featured: false,
@@ -108,7 +105,7 @@ const initialGalleryItems: GalleryItem[] = [
   {
     id: "8",
     type: "video",
-    src: "/placeholder.svg", // would be a video URL in a real app
+    src: "/placeholder.svg",
     alt: "Environment Conservation",
     description: "Our tree planting initiatives help combat climate change while creating sustainable green spaces for future generations.",
     featured: false,
@@ -116,7 +113,6 @@ const initialGalleryItems: GalleryItem[] = [
   },
 ];
 
-// Categories for gallery items
 const categories = [
   { value: "environment", label: "Environment" },
   { value: "education", label: "Education" },
@@ -146,10 +142,8 @@ const GalleryAdmin = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Create a preview URL for the file
       const previewUrl = URL.createObjectURL(file);
       
-      // Automatically determine type based on file MIME type
       const fileType = file.type.startsWith('video/') ? 'video' : 'image';
       
       setNewItem({
@@ -163,14 +157,12 @@ const GalleryAdmin = () => {
   };
   
   const handleClickUpload = () => {
-    // Trigger the hidden file input
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
   
   const handleAddItem = () => {
-    // Validate the form
     if (!newItem.src) {
       toast.error(`Please upload an ${newItem.type}`);
       return;
@@ -181,19 +173,16 @@ const GalleryAdmin = () => {
       return;
     }
     
-    // In a real app, you would upload the file to a server
     const item: GalleryItem = {
       id: Date.now().toString(),
       ...newItem,
       featured: false,
     };
     
-    // Store the updated gallery items in local storage to sync with user pages
     const updatedItems = [...galleryItems, item];
     setGalleryItems(updatedItems);
     localStorage.setItem('galleryItems', JSON.stringify(updatedItems));
     
-    // Reset form and close dialog
     setNewItem({ 
       type: "image", 
       src: "", 
@@ -204,7 +193,6 @@ const GalleryAdmin = () => {
     setIsAddDialogOpen(false);
     toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} added successfully!`);
     
-    // Offer to preview the user-facing gallery
     toast("Would you like to see how it looks on the user page?", {
       action: {
         label: "View Gallery",
@@ -255,7 +243,6 @@ const GalleryAdmin = () => {
     setIsViewDialogOpen(true);
   };
 
-  // Filter items based on active tab
   const filteredItems = activeTab === "all" 
     ? galleryItems 
     : activeTab === "images" 
@@ -538,7 +525,6 @@ const GalleryAdmin = () => {
         </div>
       </div>
       
-      {/* View Item Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -589,7 +575,6 @@ const GalleryAdmin = () => {
   );
 };
 
-// Add Badge component since it's used in this file
 const Badge = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <span className={`px-2 py-1 rounded-full text-xs font-medium ${className}`}>
     {children}

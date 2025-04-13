@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +63,7 @@ const initialPrograms = [
 ];
 
 const ProgramsAdmin = () => {
-  const [programs, setPrograms] = useState<Program[]>(initialPrograms);
+  const [programs, setPrograms] = useState<Program[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentProgram, setCurrentProgram] = useState<Program>({
@@ -76,6 +76,17 @@ const ProgramsAdmin = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
 
+  // Load programs from localStorage or use initial data
+  useEffect(() => {
+    const storedPrograms = localStorage.getItem('programsData');
+    if (storedPrograms) {
+      setPrograms(JSON.parse(storedPrograms));
+    } else {
+      setPrograms(initialPrograms);
+      localStorage.setItem('programsData', JSON.stringify(initialPrograms));
+    }
+  }, []);
+
   const filteredPrograms = programs.filter(program => 
     program.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     program.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -83,9 +94,11 @@ const ProgramsAdmin = () => {
 
   const handleAddOrEdit = () => {
     try {
+      let updatedPrograms;
+      
       if (isEditing) {
         // Update existing program
-        setPrograms(programs.map(p => p.id === currentProgram.id ? currentProgram : p));
+        updatedPrograms = programs.map(p => p.id === currentProgram.id ? currentProgram : p);
         toast.success("Program updated successfully!");
       } else {
         // Add new program
@@ -93,9 +106,14 @@ const ProgramsAdmin = () => {
           ...currentProgram,
           id: Date.now().toString(),
         };
-        setPrograms([...programs, newProgram]);
+        updatedPrograms = [...programs, newProgram];
         toast.success("Program added successfully!");
       }
+      
+      setPrograms(updatedPrograms);
+      // Store in localStorage to sync with user pages
+      localStorage.setItem('programsData', JSON.stringify(updatedPrograms));
+      
       setIsDialogOpen(false);
       resetForm();
     } catch (error) {
@@ -107,7 +125,12 @@ const ProgramsAdmin = () => {
   const handleDelete = (id: string) => {
     try {
       if (confirm("Are you sure you want to delete this program?")) {
-        setPrograms(programs.filter(p => p.id !== id));
+        const updatedPrograms = programs.filter(p => p.id !== id);
+        setPrograms(updatedPrograms);
+        
+        // Update localStorage
+        localStorage.setItem('programsData', JSON.stringify(updatedPrograms));
+        
         toast.success("Program deleted successfully!");
       }
     } catch (error) {

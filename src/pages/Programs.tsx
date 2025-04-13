@@ -1,11 +1,12 @@
 
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 const Programs = () => {
-  const programs = [
+  const [programs, setPrograms] = useState([
     {
       id: "shelter",
       title: "Shelter for the Poor",
@@ -54,7 +55,15 @@ const Programs = () => {
       link: "/donate",
       image: "/placeholder.svg",
     },
-  ];
+  ]);
+
+  // Load programs from localStorage if available
+  useEffect(() => {
+    const storedPrograms = localStorage.getItem('programsData');
+    if (storedPrograms) {
+      setPrograms(JSON.parse(storedPrograms));
+    }
+  }, []);
 
   return (
     <Layout>
