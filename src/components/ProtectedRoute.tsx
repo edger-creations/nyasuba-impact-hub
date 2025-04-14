@@ -2,29 +2,38 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 
 type ProtectedRouteProps = {
   children: ReactNode;
   requireAuth?: boolean;
   requireRegistration?: boolean;
+  requireVerification?: boolean;
 };
 
 const ProtectedRoute = ({
   children,
   requireAuth = true,
   requireRegistration = true,
+  requireVerification = false,
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isRegistered, user } = useAuth();
+  const { isAuthenticated, isRegistered, isVerified, user, checkVerification } = useAuth();
   const location = useLocation();
+
+  // Check verification status on mount and when user changes
+  useEffect(() => {
+    if (user && !user.isAdmin) {
+      checkVerification();
+    }
+  }, [user, checkVerification]);
 
   // Always allow access to the home page
   if (location.pathname === "/") {
     return <>{children}</>;
   }
 
-  // Always allow access to auth pages
-  if (["/login", "/signup", "/forgot-password"].includes(location.pathname)) {
+  // Always allow access to auth pages and verification page
+  if (["/login", "/signup", "/forgot-password", "/verify-email"].includes(location.pathname)) {
     return <>{children}</>;
   }
 
@@ -49,11 +58,17 @@ const ProtectedRoute = ({
     return <Navigate to="/login" state={{ from: location }} />;
   }
 
-  // This is likely where the issue is. Let's modify to correctly handle registered users
+  // Check registration status
   if (requireRegistration && isAuthenticated && !isRegistered) {
     // Only redirect to signup if they're actually not registered
     toast.error("Please complete registration to access this page");
     return <Navigate to="/signup" state={{ from: location }} />;
+  }
+
+  // Check verification status (if required for this route)
+  if (requireVerification && isAuthenticated && !isVerified && !user?.isAdmin) {
+    toast.warning("Please verify your email to access this page");
+    return <Navigate to="/verify-email" state={{ from: location }} />;
   }
 
   return <>{children}</>;

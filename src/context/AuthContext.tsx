@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { sendVerificationEmail, isEmailVerified } from "@/services/userService";
 
 type User = {
   id: string;
@@ -8,16 +9,20 @@ type User = {
   email: string;
   isAdmin?: boolean;
   isRegistered?: boolean;
+  isVerified?: boolean;
 };
 
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isRegistered: boolean;
+  isVerified: boolean;
   login: (email: string, password: string, navigate: (path: string) => void) => Promise<void>;
   signup: (name: string, email: string, password: string, navigate: (path: string) => void) => Promise<void>;
   logout: (navigate: (path: string) => void) => void;
   loading: boolean;
+  checkVerification: () => Promise<boolean>;
+  resendVerificationEmail: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,6 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email,
         isAdmin: isAdmin,
         isRegistered: true, // Mark all users as registered by default
+        isVerified: isAdmin ? true : false, // Admins are automatically verified
       };
       
       setUser(mockUser);
@@ -66,6 +72,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (isAdmin) {
         navigate("/admin/dashboard");
       } else {
+        // For regular users, check if they need verification
+        if (!mockUser.isVerified) {
+          toast.warning("Please verify your email to access all features");
+          await sendVerificationEmail(mockUser);
+        }
         navigate("/");
       }
     } catch (error) {
@@ -88,10 +99,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email,
         isAdmin: false,
         isRegistered: true,
+        isVerified: false, // New users start as unverified
       };
       
       setUser(newUser);
       localStorage.setItem("enf-user", JSON.stringify(newUser));
+      
+      // Send verification email
+      const emailSent = await sendVerificationEmail(newUser);
+      
+      if (emailSent) {
+        toast.success("Account created! Please verify your email.");
+      } else {
+        toast.warning("Account created, but we couldn't send a verification email. Try resending later.");
+      }
+      
       navigate("/");
     } catch (error) {
       console.error("Signup failed:", error);
@@ -106,6 +128,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("enf-user");
     navigate("/login"); // Always redirect to login page after logout
   };
+  
+  const checkVerification = async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    const verified = await isEmailVerified(user.id);
+    
+    // Update local user state if verification status changed
+    if (verified !== user.isVerified) {
+      const updatedUser = { ...user, isVerified: verified };
+      setUser(updatedUser);
+      localStorage.setItem("enf-user", JSON.stringify(updatedUser));
+    }
+    
+    return verified;
+  };
+  
+  const resendVerificationEmail = async (): Promise<boolean> => {
+    if (!user) return false;
+    return await sendVerificationEmail(user);
+  };
 
   return (
     <AuthContext.Provider
@@ -113,10 +155,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         isAuthenticated: !!user,
         isRegistered: user?.isRegistered || false,
+        isVerified: user?.isVerified || false,
         login,
         signup,
         logout,
         loading,
+        checkVerification,
+        resendVerificationEmail,
       }}
     >
       {children}

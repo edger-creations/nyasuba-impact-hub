@@ -22,6 +22,7 @@ import Reviews from "./pages/Reviews";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import Donate from "./pages/Donate";
 import NotFound from "./pages/NotFound";
@@ -72,45 +73,46 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
                 
-                {/* Protected routes */}
+                {/* Protected routes that require verification */}
                 <Route path="/programs" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <Programs />
                   </ProtectedRoute>
                 } />
                 <Route path="/about" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <About />
                   </ProtectedRoute>
                 } />
                 <Route path="/gallery" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <Gallery />
                   </ProtectedRoute>
                 } />
                 <Route path="/volunteer" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <Volunteer />
                   </ProtectedRoute>
                 } />
                 <Route path="/volunteer/apply" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <VolunteerForm />
                   </ProtectedRoute>
                 } />
                 <Route path="/reviews" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <Reviews />
                   </ProtectedRoute>
                 } />
                 <Route path="/contact" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <Contact />
                   </ProtectedRoute>
                 } />
                 <Route path="/donate" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireVerification={true}>
                     <Donate />
                   </ProtectedRoute>
                 } />

@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignUp = () => {
   const { signup } = useAuth();
@@ -53,7 +55,6 @@ const SignUp = () => {
 
     try {
       await signup(formData.fullName, formData.email, formData.password, navigate);
-      toast.success("Account created successfully!");
       // No need to navigate here as signup function will do it
     } catch (error) {
       toast.error("Registration failed. Please try again.");
@@ -69,6 +70,13 @@ const SignUp = () => {
         <div className="w-full max-w-md">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
             <h1 className="text-2xl font-bold mb-6 text-center">Sign Up</h1>
+            
+            <Alert className="mb-6 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                After signing up, you'll need to verify your email address to access all features.
+              </AlertDescription>
+            </Alert>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
@@ -128,7 +136,9 @@ const SignUp = () => {
                   onCheckedChange={handleCheckboxChange}
                   required
                 />
-                <Label htmlFor="agreeTerms" className="text-sm">Check me.</Label>
+                <Label htmlFor="agreeTerms" className="text-sm">
+                  I agree to the terms and conditions
+                </Label>
               </div>
 
               <Button 
