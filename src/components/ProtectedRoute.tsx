@@ -22,6 +22,7 @@ const ProtectedRoute = ({
 
   // Check verification status on mount and when user changes
   useEffect(() => {
+    // Only check verification if we have a user who is not an admin
     if (user && !user.isAdmin) {
       checkVerification();
       
@@ -31,6 +32,12 @@ const ProtectedRoute = ({
         isVerified: user.isVerified,
         email: user.email
       });
+      
+      // Check if there's a verification link stored for this user
+      const lastVerificationUrl = localStorage.getItem('enf-last-verification-url');
+      if (lastVerificationUrl) {
+        console.log("Verification URL for current user:", lastVerificationUrl);
+      }
     }
   }, [user, checkVerification]);
 

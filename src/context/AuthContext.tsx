@@ -1,5 +1,4 @@
-
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { sendVerificationEmail, isEmailVerified, User as ServiceUser } from "@/services/userService";
 
@@ -8,7 +7,7 @@ type User = {
   name: string;
   email: string;
   isAdmin?: boolean;
-  isRegistered: boolean;  // Changed from optional to required to match userService.ts
+  isRegistered: boolean;
   isVerified?: boolean;
 };
 
@@ -27,15 +26,23 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is stored in localStorage
     const storedUser = localStorage.getItem("enf-user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Error parsing stored user:", error);
+        localStorage.removeItem("enf-user");
+      }
     }
     setLoading(false);
   }, []);
@@ -43,36 +50,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (email: string, password: string, navigate: (path: string) => void) => {
     setLoading(true);
     try {
-      // This is a mock login that would be replaced with a real API call
-      // Simulating API delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      // Check if the login is using admin credentials
       const isAdmin = email === "admin@esthernyasubafoundation.org" && 
                      password === "Elly@12345@2024#";
       
-      // For demo purposes, we're treating some emails as registered users
       const registeredEmails = ["john.doe@example.com", "registered@example.com", "admin@esthernyasubafoundation.org"];
       
-      // Important fix: Mark ALL users as registered by default unless explicitly set otherwise
-      // This ensures that regular users don't get redirected to signup after login
       const mockUser: User = {
         id: isAdmin ? "admin-123" : "user-" + Date.now(),
         name: isAdmin ? "Administrator" : email.split("@")[0],
         email,
         isAdmin: isAdmin,
-        isRegistered: true, // Mark all users as registered by default
-        isVerified: isAdmin ? true : false, // Admins are automatically verified
+        isRegistered: true,
+        isVerified: isAdmin ? true : false,
       };
       
       setUser(mockUser);
       localStorage.setItem("enf-user", JSON.stringify(mockUser));
       
-      // Redirect based on user role
       if (isAdmin) {
         navigate("/admin/dashboard");
       } else {
-        // For regular users, check if they need verification
         if (!mockUser.isVerified) {
           toast.warning("Please verify your email to access all features");
           await sendVerificationEmail({
@@ -96,7 +95,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (name: string, email: string, password: string, navigate: (path: string) => void) => {
     setLoading(true);
     try {
-      // Mock signup, would be replaced with actual API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
       const newUser: User = {
@@ -105,13 +103,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email,
         isAdmin: false,
         isRegistered: true,
-        isVerified: false, // New users start as unverified
+        isVerified: false,
       };
       
       setUser(newUser);
       localStorage.setItem("enf-user", JSON.stringify(newUser));
       
-      // Send verification email
       const emailSent = await sendVerificationEmail({
         id: newUser.id,
         name: newUser.name,
@@ -138,15 +135,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = (navigate: (path: string) => void) => {
     setUser(null);
     localStorage.removeItem("enf-user");
-    navigate("/login"); // Always redirect to login page after logout
+    navigate("/login");
   };
-  
+
   const checkVerification = async (): Promise<boolean> => {
     if (!user) return false;
     
     const verified = await isEmailVerified(user.id);
     
-    // Update local user state if verification status changed
     if (verified !== user.isVerified) {
       const updatedUser = { ...user, isVerified: verified };
       setUser(updatedUser);
@@ -155,7 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     return verified;
   };
-  
+
   const resendVerificationEmail = async (): Promise<boolean> => {
     if (!user) return false;
     
@@ -168,27 +164,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const contextValue: AuthContextType = {
+    user,
+    isAuthenticated: !!user,
+    isRegistered: user?.isRegistered || false,
+    isVerified: user?.isVerified || false,
+    login,
+    signup,
+    logout,
+    loading,
+    checkVerification,
+    resendVerificationEmail,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isRegistered: user?.isRegistered || false,
-        isVerified: user?.isVerified || false,
-        login,
-        signup,
-        logout,
-        loading,
-        checkVerification,
-        resendVerificationEmail,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");

@@ -54,12 +54,14 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
+      console.log("Starting signup process...");
       await signup(formData.fullName, formData.email, formData.password, navigate);
       // The navigate is handled inside the signup function
-      toast.info("Please check the console for the verification link (for testing)");
+      console.log("Signup completed, check console for verification link");
+      toast.info("Please check the console for the verification link (for testing purposes)");
     } catch (error) {
-      toast.error("Registration failed. Please try again.");
       console.error("Signup error:", error);
+      toast.error("Registration failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

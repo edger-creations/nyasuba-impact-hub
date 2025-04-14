@@ -164,6 +164,8 @@ export const createVerificationToken = (userId: string): string => {
   
   savePendingVerifications(filteredVerifications);
   
+  console.log("Created verification token:", token, "for user:", userId);
+  
   return token;
 };
 
@@ -176,6 +178,8 @@ export const sendVerificationEmail = async (user: User): Promise<boolean> => {
       throw new Error("Invalid user for verification email");
     }
     
+    console.log("Preparing verification email for:", user.email);
+    
     // Create a verification token
     const token = createVerificationToken(user.id);
     
@@ -185,9 +189,13 @@ export const sendVerificationEmail = async (user: User): Promise<boolean> => {
     
     // In a real implementation, you would call your backend API to send the email
     // For demo purposes, we'll simulate sending an email and show a toast
-    console.log("Sending verification email to:", user.email);
+    console.log("================================================================");
+    console.log("VERIFICATION EMAIL DETAILS:");
+    console.log("To:", user.email);
+    console.log("Subject: Verify your email address");
     console.log("Verification URL:", verificationUrl);
-    console.log("Using SMTP config:", SMTP_CONFIG);
+    console.log("SMTP Configuration:", SMTP_CONFIG);
+    console.log("================================================================");
     
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -212,11 +220,15 @@ export const sendVerificationEmail = async (user: User): Promise<boolean> => {
  */
 export const verifyEmailWithToken = async (userId: string, token: string): Promise<boolean> => {
   try {
+    console.log("Verifying email with token:", token, "for user:", userId);
+    
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Get pending verifications
     const verifications = getPendingVerifications();
+    
+    console.log("All pending verifications:", verifications);
     
     // Find matching verification
     const verification = verifications.find(v => 
@@ -226,14 +238,18 @@ export const verifyEmailWithToken = async (userId: string, token: string): Promi
     );
     
     if (!verification) {
+      console.error("No matching verification found or token expired");
       throw new Error("Invalid or expired verification token");
     }
+    
+    console.log("Found valid verification:", verification);
     
     // In a real app, you would update the user's verified status in your database
     // For our mock implementation, we'll update our MOCK_USERS array
     const userIndex = MOCK_USERS.findIndex(u => u.id === userId);
     
     if (userIndex === -1) {
+      console.error("User not found in MOCK_USERS:", userId);
       throw new Error("User not found");
     }
     
@@ -247,6 +263,7 @@ export const verifyEmailWithToken = async (userId: string, token: string): Promi
       if (user.id === userId) {
         user.isVerified = true;
         localStorage.setItem("enf-user", JSON.stringify(user));
+        console.log("Updated user verification status in localStorage");
       }
     }
     
@@ -254,6 +271,7 @@ export const verifyEmailWithToken = async (userId: string, token: string): Promi
     const updatedVerifications = verifications.filter(v => !(v.userId === userId && v.token === token));
     savePendingVerifications(updatedVerifications);
     
+    console.log("Email verification successful");
     return true;
   } catch (error) {
     console.error("Error verifying email:", error);
@@ -268,11 +286,18 @@ export const verifyEmailWithToken = async (userId: string, token: string): Promi
  */
 export const isEmailVerified = async (userId: string): Promise<boolean> => {
   try {
+    console.log("Checking verification status for user:", userId);
     const user = await getUserById(userId);
+    
+    if (!user) {
+      console.log("User not found when checking verification status");
+      return false;
+    }
+    
+    console.log("User verification status:", user.isVerified);
     return user?.isVerified || false;
   } catch (error) {
     console.error("Error checking email verification status:", error);
     return false;
   }
 };
-
