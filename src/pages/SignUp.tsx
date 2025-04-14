@@ -55,7 +55,8 @@ const SignUp = () => {
 
     try {
       await signup(formData.fullName, formData.email, formData.password, navigate);
-      // No need to navigate here as signup function will do it
+      // The navigate is handled inside the signup function
+      toast.info("Please check the console for the verification link (for testing)");
     } catch (error) {
       toast.error("Registration failed. Please try again.");
       console.error("Signup error:", error);

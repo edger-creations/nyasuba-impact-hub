@@ -44,6 +44,14 @@ const MOCK_USERS = [
   }
 ];
 
+// SMTP Configuration
+const SMTP_CONFIG = {
+  host: "smtp.gmail.com",
+  user: "nyasubaesther64@gmail.com",
+  password: "gwfj fmhq hbqv ixwk",
+  port: 587
+};
+
 // Store pending verifications with tokens
 interface VerificationRequest {
   userId: string;
@@ -179,6 +187,7 @@ export const sendVerificationEmail = async (user: User): Promise<boolean> => {
     // For demo purposes, we'll simulate sending an email and show a toast
     console.log("Sending verification email to:", user.email);
     console.log("Verification URL:", verificationUrl);
+    console.log("Using SMTP config:", SMTP_CONFIG);
     
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));

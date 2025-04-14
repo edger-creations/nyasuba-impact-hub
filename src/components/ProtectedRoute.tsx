@@ -24,6 +24,13 @@ const ProtectedRoute = ({
   useEffect(() => {
     if (user && !user.isAdmin) {
       checkVerification();
+      
+      // Add a console log to help with debugging
+      console.log("Current user verification status:", { 
+        userId: user.id,
+        isVerified: user.isVerified,
+        email: user.email
+      });
     }
   }, [user, checkVerification]);
 
@@ -68,6 +75,13 @@ const ProtectedRoute = ({
   // Check verification status (if required for this route)
   if (requireVerification && isAuthenticated && !isVerified && !user?.isAdmin) {
     toast.warning("Please verify your email to access this page");
+    
+    // Log the verification URL for testing purposes
+    const lastVerificationUrl = localStorage.getItem('enf-last-verification-url');
+    if (lastVerificationUrl) {
+      console.log("Test verification URL (for current user):", lastVerificationUrl);
+    }
+    
     return <Navigate to="/verify-email" state={{ from: location }} />;
   }
 
