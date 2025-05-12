@@ -7,8 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { useState } from "react";
-// Remove the useEffect import since we're importing the entire React library below
-import React from "react";
+import * as React from "react"; // Import React properly
 import AOS from "aos";
 import "aos/dist/aos.css";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -41,7 +40,7 @@ import AdminSettings from "./pages/admin/Settings";
 import AdminUsers from "./pages/admin/Users";
 import AdminEvents from "./pages/admin/Events";
 
-const App = () => {
+const App: React.FC = () => {
   // Initialize AOS
   React.useEffect(() => {
     AOS.init({

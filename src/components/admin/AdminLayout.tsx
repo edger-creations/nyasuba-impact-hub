@@ -19,7 +19,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   useEffect(() => {
     // Check if user is authenticated and is an admin
     if (!loading && (!isAuthenticated || !user?.isAdmin)) {
+      console.log("Admin check failed:", { isAuthenticated, isAdmin: user?.isAdmin, loading });
       navigate("/login?redirect=/admin/dashboard");
+    } else {
+      console.log("Admin check passed:", { isAuthenticated, isAdmin: user?.isAdmin, loading });
     }
   }, [isAuthenticated, user, loading, navigate]);
 

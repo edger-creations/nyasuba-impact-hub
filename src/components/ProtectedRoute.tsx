@@ -27,8 +27,10 @@ const ProtectedRoute = ({
       checkVerification();
       
       // Add a console log to help with debugging
-      console.log("DEMO MODE - Current user verification status:", { 
+      console.log("Auth Status:", { 
         userId: user.id,
+        isAuthenticated,
+        isRegistered,
         isVerified: user.isVerified,
         email: user.email
       });
@@ -40,7 +42,7 @@ const ProtectedRoute = ({
         console.log("Copy and paste the above URL in your browser to verify your email");
       }
     }
-  }, [user, checkVerification]);
+  }, [user, checkVerification, isAuthenticated, isRegistered]);
 
   // Always allow access to the home page
   if (location.pathname === "/") {
