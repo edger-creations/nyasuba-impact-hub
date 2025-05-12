@@ -190,11 +190,14 @@ export const sendVerificationEmail = async (user: User): Promise<boolean> => {
     // In a real implementation, you would call your backend API to send the email
     // For demo purposes, we'll simulate sending an email and show a toast
     console.log("================================================================");
-    console.log("VERIFICATION EMAIL DETAILS:");
+    console.log("DEMO MODE - VERIFICATION EMAIL DETAILS:");
     console.log("To:", user.email);
     console.log("Subject: Verify your email address");
     console.log("Verification URL:", verificationUrl);
     console.log("SMTP Configuration:", SMTP_CONFIG);
+    console.log("================================================================");
+    console.log("TO VERIFY YOUR EMAIL: Copy and paste this URL in your browser address bar:");
+    console.log(verificationUrl);
     console.log("================================================================");
     
     // Simulate API call delay
@@ -203,8 +206,8 @@ export const sendVerificationEmail = async (user: User): Promise<boolean> => {
     // For demo purposes, we'll save the verification URL to localStorage so we can test it
     localStorage.setItem('enf-last-verification-url', verificationUrl);
     
-    toast.success(`Verification email sent to ${user.email}`);
-    toast.info("For testing: Check the console for the verification link");
+    toast.success(`DEMO MODE: Verification email sent to ${user.email}`);
+    toast.info("For testing: Check the browser console for the verification link (F12)");
     
     return true;
   } catch (error) {

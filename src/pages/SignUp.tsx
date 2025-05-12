@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SignUp = () => {
@@ -58,7 +58,7 @@ const SignUp = () => {
       await signup(formData.fullName, formData.email, formData.password, navigate);
       // The navigate is handled inside the signup function
       console.log("Signup completed, check console for verification link");
-      toast.info("Please check the console for the verification link (for testing purposes)");
+      toast.info("DEMO MODE: Please check the browser console for the verification link (Ctrl+Shift+J or Cmd+Option+J)");
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("Registration failed. Please try again.");
@@ -74,6 +74,13 @@ const SignUp = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
             <h1 className="text-2xl font-bold mb-6 text-center">Sign Up</h1>
             
+            <Alert className="mb-4 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                DEMO MODE: After signing up, check your browser console (F12) for the verification link
+              </AlertDescription>
+            </Alert>
+
             <Alert className="mb-6 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>

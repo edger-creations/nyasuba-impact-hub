@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { sendVerificationEmail, isEmailVerified, User as ServiceUser } from "@/services/userService";
@@ -73,7 +74,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         navigate("/admin/dashboard");
       } else {
         if (!mockUser.isVerified) {
-          toast.warning("Please verify your email to access all features");
+          toast.warning("DEMO MODE: Please verify your email to access all features");
           await sendVerificationEmail({
             id: mockUser.id,
             name: mockUser.name,
@@ -81,6 +82,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             isRegistered: mockUser.isRegistered,
             isVerified: mockUser.isVerified || false
           });
+          
+          console.log("DEMO MODE: Check the console for verification link!");
+          toast.info("DEMO MODE: Check your browser console for the verification link (F12)");
         }
         navigate("/");
       }
@@ -109,6 +113,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(newUser);
       localStorage.setItem("enf-user", JSON.stringify(newUser));
       
+      console.log("DEMO MODE: About to send verification email for:", newUser.email);
+      
       const emailSent = await sendVerificationEmail({
         id: newUser.id,
         name: newUser.name,
@@ -119,6 +125,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (emailSent) {
         toast.success("Account created! Please verify your email.");
+        toast.info("DEMO MODE: Check your browser console for the verification link (F12)");
       } else {
         toast.warning("Account created, but we couldn't send a verification email. Try resending later.");
       }
