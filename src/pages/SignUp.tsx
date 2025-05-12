@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const SignUp = () => {
   const { signup } = useAuth();
@@ -58,7 +59,7 @@ const SignUp = () => {
       await signup(formData.fullName, formData.email, formData.password, navigate);
       // The navigate is handled inside the signup function
       console.log("Signup completed, check console for verification link");
-      toast.info("DEMO MODE: Please check the browser console for the verification link (Ctrl+Shift+J or Cmd+Option+J)");
+      toast.info("Please check the browser console for the verification link (Ctrl+Shift+J or Cmd+Option+J)");
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("Registration failed. Please try again.");
@@ -77,7 +78,7 @@ const SignUp = () => {
             <Alert className="mb-4 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                DEMO MODE: After signing up, check your browser console (F12) for the verification link
+                After signing up, check your browser console (F12) for the verification link
               </AlertDescription>
             </Alert>
 

@@ -17,6 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { supabase } from "@/integrations/supabase/client";
 
 // Login form schema
 const loginFormSchema = z.object({

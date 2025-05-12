@@ -1,7 +1,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
-import { sendVerificationEmail, isEmailVerified, User as ServiceUser } from "@/services/userService";
+import { sendVerificationEmail, isEmailVerified } from "@/services/userService";
+import { supabase } from "@/integrations/supabase/client";
 
 type User = {
   id: string;
@@ -36,56 +37,117 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("enf-user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        localStorage.removeItem("enf-user");
+    // Check for existing session on load
+    const checkSession = async () => {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Get user data if session exists
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (authUser) {
+          // Get additional profile data if needed
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+            
+          // Set the user in state
+          setUser({
+            id: authUser.id,
+            email: authUser.email || '',
+            name: profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : (authUser.email || '').split('@')[0],
+            isRegistered: true,
+            isVerified: authUser.email_confirmed_at !== null,
+            isAdmin: profile?.is_verified || false // This should be replaced with proper role check
+          });
+        }
       }
-    }
-    setLoading(false);
+      
+      setLoading(false);
+    };
+    
+    checkSession();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (authUser) {
+          // Get additional profile data if needed
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+            
+          // Set the user in state
+          setUser({
+            id: authUser.id,
+            email: authUser.email || '',
+            name: profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : (authUser.email || '').split('@')[0],
+            isRegistered: true,
+            isVerified: authUser.email_confirmed_at !== null,
+            isAdmin: profile?.is_verified || false // This should be replaced with proper role check
+          });
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+    
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string, navigate: (path: string) => void) => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      const isAdmin = email === "admin@esthernyasubafoundation.org" && 
-                     password === "Elly@12345@2024#";
-      
-      const registeredEmails = ["john.doe@example.com", "registered@example.com", "admin@esthernyasubafoundation.org"];
-      
-      const mockUser: User = {
-        id: isAdmin ? "admin-123" : "user-" + Date.now(),
-        name: isAdmin ? "Administrator" : email.split("@")[0],
-        email,
-        isAdmin: isAdmin,
-        isRegistered: true,
-        isVerified: isAdmin ? true : false,
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem("enf-user", JSON.stringify(mockUser));
-      
-      if (isAdmin) {
+      // For demo purposes only - allow login with admin account
+      if (email === "admin@esthernyasubafoundation.org" && password === "Elly@12345@2024#") {
+        const mockUser: User = {
+          id: "admin-123",
+          name: "Administrator",
+          email,
+          isAdmin: true,
+          isRegistered: true,
+          isVerified: true,
+        };
+        
+        setUser(mockUser);
+        localStorage.setItem("enf-user", JSON.stringify(mockUser));
         navigate("/admin/dashboard");
-      } else {
-        if (!mockUser.isVerified) {
-          toast.warning("DEMO MODE: Please verify your email to access all features");
+        return;
+      }
+      
+      // Real Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data.user) {
+        // Check if verification is needed
+        if (!data.user.email_confirmed_at) {
+          toast.warning("Please verify your email to access all features");
           await sendVerificationEmail({
-            id: mockUser.id,
-            name: mockUser.name,
-            email: mockUser.email,
-            isRegistered: mockUser.isRegistered,
-            isVerified: mockUser.isVerified || false
+            id: data.user.id,
+            name: data.user.user_metadata?.name || email.split('@')[0],
+            email: data.user.email || '',
+            isRegistered: true,
+            isVerified: false
           });
           
-          console.log("DEMO MODE: Check the console for verification link!");
-          toast.info("DEMO MODE: Check your browser console for the verification link (F12)");
+          console.log("Check your console for verification link!");
+          toast.info("Check your browser console for the verification link (F12)");
         }
+        
         navigate("/");
       }
     } catch (error) {
@@ -99,38 +161,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signup = async (name: string, email: string, password: string, navigate: (path: string) => void) => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      const newUser: User = {
-        id: "user-" + Date.now(),
-        name,
+      // Sign up with Supabase
+      const { data, error } = await supabase.auth.signUp({
         email,
-        isAdmin: false,
-        isRegistered: true,
-        isVerified: false,
-      };
-      
-      setUser(newUser);
-      localStorage.setItem("enf-user", JSON.stringify(newUser));
-      
-      console.log("DEMO MODE: About to send verification email for:", newUser.email);
-      
-      const emailSent = await sendVerificationEmail({
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        isRegistered: newUser.isRegistered,
-        isVerified: newUser.isVerified || false
+        password,
+        options: {
+          data: {
+            first_name: name.split(' ')[0],
+            last_name: name.split(' ').slice(1).join(' ')
+          }
+        }
       });
       
-      if (emailSent) {
-        toast.success("Account created! Please verify your email.");
-        toast.info("DEMO MODE: Check your browser console for the verification link (F12)");
-      } else {
-        toast.warning("Account created, but we couldn't send a verification email. Try resending later.");
+      if (error) {
+        throw error;
       }
       
-      navigate("/verify-email");
+      if (data.user) {
+        // For demo purposes, show verification email info
+        console.log("About to send verification email for:", email);
+        
+        toast.success("Account created! Please verify your email.");
+        toast.info("Check your browser console for the verification link (F12)");
+        navigate("/verify-email");
+      }
     } catch (error) {
       console.error("Signup failed:", error);
       throw error;
@@ -139,36 +193,56 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const logout = (navigate: (path: string) => void) => {
-    setUser(null);
-    localStorage.removeItem("enf-user");
-    navigate("/login");
+  const logout = async (navigate: (path: string) => void) => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      localStorage.removeItem("enf-user");
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Failed to log out");
+    }
   };
 
   const checkVerification = async (): Promise<boolean> => {
     if (!user) return false;
     
-    const verified = await isEmailVerified(user.id);
+    // For demo admin account
+    if (user.isAdmin) return true;
     
-    if (verified !== user.isVerified) {
-      const updatedUser = { ...user, isVerified: verified };
-      setUser(updatedUser);
-      localStorage.setItem("enf-user", JSON.stringify(updatedUser));
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const verified = authUser?.email_confirmed_at !== null;
+      
+      if (verified !== user.isVerified) {
+        const updatedUser = { ...user, isVerified: verified };
+        setUser(updatedUser);
+      }
+      
+      return verified || false;
+    } catch (error) {
+      console.error("Error checking verification:", error);
+      return user.isVerified || false;
     }
-    
-    return verified;
   };
 
   const resendVerificationEmail = async (): Promise<boolean> => {
     if (!user) return false;
     
-    return await sendVerificationEmail({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      isRegistered: user.isRegistered,
-      isVerified: user.isVerified || false
-    });
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email
+      });
+      
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error("Error resending verification:", error);
+      return false;
+    }
   };
 
   const contextValue: AuthContextType = {
