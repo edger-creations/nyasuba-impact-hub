@@ -1,12 +1,15 @@
+
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight, HeartHandshake, Lightbulb, TreePine, HomeIcon, BookOpen, UsersIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const programs = [
     {
@@ -39,16 +42,27 @@ const Index = () => {
               Empowering communities, uplifting lives, and creating lasting change.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/volunteer">
-                <Button className="bg-enf-green text-white hover:bg-enf-dark-green">
-                  Join Our Membership
+              {isAuthenticated ? (
+                <Button 
+                  onClick={() => navigate('/programs')}
+                  className="bg-enf-green text-white hover:bg-enf-dark-green"
+                >
+                  Explore Our Programs
                 </Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="outline" className="border-enf-green text-enf-green hover:bg-enf-green/10 dark:border-enf-light-green dark:text-enf-light-green dark:hover:bg-enf-light-green/10">
-                  Login Now
-                </Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/volunteer">
+                    <Button className="bg-enf-green text-white hover:bg-enf-dark-green">
+                      Join Our Membership
+                    </Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="outline" className="border-enf-green text-enf-green hover:bg-enf-green/10 dark:border-enf-light-green dark:text-enf-light-green dark:hover:bg-enf-light-green/10">
+                      Login Now
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

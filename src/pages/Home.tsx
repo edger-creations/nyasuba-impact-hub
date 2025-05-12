@@ -4,8 +4,13 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight, HeartHandshake, Lightbulb, TreePine } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -19,16 +24,27 @@ const Home = () => {
               Empowering communities, uplifting lives, and creating lasting change.
             </p>
             <div className="flex flex-wrap justify-center gap-4" data-aos="fade-up" data-aos-delay="200">
-              <Link to="/volunteer">
-                <Button className="bg-enf-green text-white hover:bg-enf-dark-green">
-                  Join Our Membership
+              {isAuthenticated ? (
+                <Button
+                  onClick={() => navigate('/programs')}
+                  className="bg-enf-green text-white hover:bg-enf-dark-green"
+                >
+                  Explore Our Programs
                 </Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="outline" className="border-enf-green text-enf-green hover:bg-enf-green/10 dark:border-enf-light-green dark:text-enf-light-green dark:hover:bg-enf-light-green/10">
-                  Login Now
-                </Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/volunteer">
+                    <Button className="bg-enf-green text-white hover:bg-enf-dark-green">
+                      Join Our Membership
+                    </Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="outline" className="border-enf-green text-enf-green hover:bg-enf-green/10 dark:border-enf-light-green dark:text-enf-light-green dark:hover:bg-enf-light-green/10">
+                      Login Now
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
