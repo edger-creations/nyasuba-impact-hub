@@ -6,7 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+// Remove the useEffect import since we're importing the entire React library below
+import React from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -41,7 +43,7 @@ import AdminEvents from "./pages/admin/Events";
 
 const App = () => {
   // Initialize AOS
-  useEffect(() => {
+  React.useEffect(() => {
     AOS.init({
       duration: 800,
       once: false,
