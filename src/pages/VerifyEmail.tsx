@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 const VerifyEmail = () => {

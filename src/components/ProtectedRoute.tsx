@@ -1,7 +1,7 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/hooks/use-toast";
 import { ReactNode, useEffect } from "react";
 
 type ProtectedRouteProps = {
