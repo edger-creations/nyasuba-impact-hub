@@ -34,13 +34,6 @@ const ProtectedRoute = ({
         isVerified: user.isVerified,
         email: user.email
       });
-      
-      // Check if there's a verification link stored for this user
-      const lastVerificationUrl = localStorage.getItem('enf-last-verification-url');
-      if (lastVerificationUrl) {
-        console.log("DEMO MODE - Verification URL for current user:", lastVerificationUrl);
-        console.log("Copy and paste the above URL in your browser to verify your email");
-      }
     }
   }, [user, checkVerification, isAuthenticated, isRegistered]);
 
@@ -84,15 +77,7 @@ const ProtectedRoute = ({
 
   // Check verification status (if required for this route)
   if (requireVerification && isAuthenticated && !isVerified && !user?.isAdmin) {
-    toast.warning("DEMO MODE: Please verify your email to access this page");
-    
-    // Log the verification URL for testing purposes
-    const lastVerificationUrl = localStorage.getItem('enf-last-verification-url');
-    if (lastVerificationUrl) {
-      console.log("DEMO MODE - Test verification URL (for current user):", lastVerificationUrl);
-      console.log("Copy and paste the above URL in your browser to verify your email");
-    }
-    
+    toast.warning("Please verify your email to access this page");
     return <Navigate to="/verify-email" state={{ from: location }} />;
   }
 

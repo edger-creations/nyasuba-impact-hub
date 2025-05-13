@@ -1,7 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
-import { sendVerificationEmail, isEmailVerified } from "@/services/userService";
 import { supabase } from "@/integrations/supabase/client";
 
 type User = {
@@ -62,7 +61,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             name: profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : (authUser.email || '').split('@')[0],
             isRegistered: true,
             isVerified: authUser.email_confirmed_at !== null,
-            isAdmin: profile?.is_verified || false // This should be replaced with proper role check
+            isAdmin: profile?.is_verified || false
           });
         }
       }
@@ -74,6 +73,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
+      
       if (event === 'SIGNED_IN' && session) {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         
@@ -92,11 +93,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             name: profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : (authUser.email || '').split('@')[0],
             isRegistered: true,
             isVerified: authUser.email_confirmed_at !== null,
-            isAdmin: profile?.is_verified || false // This should be replaced with proper role check
+            isAdmin: profile?.is_verified || false
           });
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+      } else if (event === 'USER_UPDATED') {
+        // If the user was updated (e.g., email verified), refresh the user data
+        if (session) {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser && user) {
+            setUser({
+              ...user,
+              isVerified: authUser.email_confirmed_at !== null
+            });
+          }
+        }
       }
     });
     
@@ -136,21 +148,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Check if verification is needed
         if (!data.user.email_confirmed_at) {
           toast.warning("Please verify your email to access all features");
-          await sendVerificationEmail({
-            id: data.user.id,
-            name: data.user.user_metadata?.name || email.split('@')[0],
-            email: data.user.email || '',
-            isRegistered: true,
-            isVerified: false
-          });
-          
-          console.log("Check your console for verification link!");
-          toast.info("Check your browser console for the verification link (F12)");
         }
         
         navigate("/");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
       throw error;
     } finally {
@@ -178,11 +180,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (data.user) {
-        // For demo purposes, show verification email info
-        console.log("About to send verification email for:", email);
-        
-        toast.success("Account created! Please verify your email.");
-        toast.info("Check your browser console for the verification link (F12)");
+        toast.success("Account created! Please check your email for verification instructions.");
         navigate("/verify-email");
       }
     } catch (error) {
@@ -238,6 +236,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (error) throw error;
       
+      toast.success("Verification email sent! Please check your inbox.");
       return true;
     } catch (error) {
       console.error("Error resending verification:", error);
