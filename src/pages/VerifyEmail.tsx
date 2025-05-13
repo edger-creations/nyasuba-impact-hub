@@ -21,11 +21,11 @@ const VerifyEmail = () => {
       checkVerification();
     }
     
-    // If user is verified, redirect after a brief delay
+    // If user is verified, redirect to login after a brief delay
     if (isVerified) {
+      toast.success("Email verified successfully! Please log in to continue.");
       setTimeout(() => {
-        const from = location.state?.from?.pathname || "/";
-        navigate(from);
+        navigate("/login");
       }, 3000);
     }
     
@@ -41,7 +41,7 @@ const VerifyEmail = () => {
     return () => {
       clearInterval(verificationCheck);
     };
-  }, [user, isVerified, checkVerification, navigate, location.state]);
+  }, [user, isVerified, checkVerification, navigate]);
   
   const handleResendVerification = async () => {
     if (!user) {
@@ -73,14 +73,17 @@ const VerifyEmail = () => {
               <div className="flex justify-center mb-4">
                 <CheckCircle className="h-12 w-12 text-green-500" />
               </div>
-              <CardTitle className="text-center">Email Already Verified</CardTitle>
+              <CardTitle className="text-center">Email Verified</CardTitle>
               <CardDescription className="text-center">
-                Your email address has already been verified.
+                Your email address has been successfully verified.
               </CardDescription>
             </CardHeader>
+            <CardContent className="text-center">
+              <p>You will be redirected to the login page in a moment.</p>
+            </CardContent>
             <CardFooter className="flex justify-center">
-              <Button onClick={() => navigate("/")}>
-                Go to Home
+              <Button onClick={() => navigate("/login")}>
+                Go to Login
               </Button>
             </CardFooter>
           </Card>

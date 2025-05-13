@@ -32,10 +32,11 @@ const ProtectedRoute = ({
         isAuthenticated,
         isRegistered,
         isVerified: user.isVerified,
-        email: user.email
+        email: user.email,
+        path: location.pathname
       });
     }
-  }, [user, checkVerification, isAuthenticated, isRegistered]);
+  }, [user, checkVerification, isAuthenticated, isRegistered, location]);
 
   // Always allow access to the home page
   if (location.pathname === "/") {
@@ -51,7 +52,7 @@ const ProtectedRoute = ({
   if (location.pathname.startsWith("/admin")) {
     if (!isAuthenticated) {
       toast.error("You must be logged in to access the admin area");
-      return <Navigate to="/login" />;
+      return <Navigate to="/login" state={{ from: location }} />;
     }
     
     if (!user?.isAdmin) {
