@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -163,6 +162,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signup = async (name: string, email: string, password: string, navigate: (path: string) => void) => {
     setLoading(true);
     try {
+      console.log("Calling Supabase signUp with email:", email);
+      
       // Sign up with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -175,16 +176,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
       
+      console.log("Supabase signup response:", { data, error });
+      
       if (error) {
+        console.error("Signup error from Supabase:", error);
         throw error;
       }
       
       if (data.user) {
-        toast.success("Account created! Please check your email for verification instructions.");
-        navigate("/verify-email");
+        // Check for email confirmation status
+        if (data.user.email_confirmed_at === null) {
+          console.log("Email verification required");
+          toast({
+            title: "Account created!",
+            description: "Please check your email for verification instructions.",
+          });
+          navigate("/verify-email");
+        } else {
+          console.log("Email already verified");
+          toast({
+            title: "Account created!",
+            description: "Your account has been created successfully.",
+          });
+          navigate("/");
+        }
+      } else {
+        console.error("No user data returned from signup");
+        throw new Error("Failed to create account. Please try again.");
       }
-    } catch (error) {
-      console.error("Signup failed:", error);
+    } catch (error: any) {
+      console.error("Detailed signup error:", error);
+      
+      // Format the error message
+      if (typeof error === 'object') {
+        console.error("Error properties:", Object.keys(error));
+        console.error("Error message:", error.message);
+        console.error("Error code:", error.code);
+        console.error("Error status:", error.status);
+      }
+      
       throw error;
     } finally {
       setLoading(false);

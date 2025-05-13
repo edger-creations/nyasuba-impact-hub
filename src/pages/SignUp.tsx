@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -42,23 +42,56 @@ const SignUp = () => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match. Please try again.");
+      toast({
+        title: "Password Error",
+        description: "Passwords do not match. Please try again.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!formData.agreeTerms) {
-      toast.error("Please agree to the terms and conditions.");
+      toast({
+        title: "Terms Error",
+        description: "Please agree to the terms and conditions.",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      console.log("Starting signup process with:", { 
+        name: formData.fullName, 
+        email: formData.email,
+        passwordLength: formData.password.length
+      });
+      
       await signup(formData.fullName, formData.email, formData.password, navigate);
       // The navigate is handled inside the signup function
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast.error("Registration failed. Please try again.");
+    } catch (error: any) {
+      console.error("Signup error details:", error);
+      
+      // More detailed error handling
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check for specific Supabase errors
+      if (error?.code === "23505") {
+        errorMessage = "This email is already registered. Please use another email or login.";
+      } else if (error?.code === "auth-email-rate-limit-exceeded") {
+        errorMessage = "Too many signup attempts. Please try again later.";
+      }
+      
+      toast({
+        title: "Registration Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
