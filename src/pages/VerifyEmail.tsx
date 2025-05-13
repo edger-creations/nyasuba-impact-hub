@@ -13,8 +13,18 @@ const VerifyEmail = () => {
   const { user, isVerified, resendVerificationEmail, checkVerification } = useAuth();
   const [resending, setResending] = useState(false);
   const [verificationChecked, setVerificationChecked] = useState(false);
+  const [email, setEmail] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Get email from state if available (passed from signup page)
+  useEffect(() => {
+    if (location.state?.email) {
+      setEmail(location.state.email);
+    } else if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [location.state, user]);
   
   // Handle token from URL if present (user clicked email link)
   useEffect(() => {
@@ -104,10 +114,10 @@ const VerifyEmail = () => {
   }, [user, isVerified, checkVerification, navigate]);
   
   const handleResendVerification = async () => {
-    if (!user) {
+    if (!email) {
       toast({
         title: "Error",
-        description: "You must be logged in to request a verification email",
+        description: "No email address found to send verification email",
         variant: "destructive"
       });
       return;
@@ -115,11 +125,20 @@ const VerifyEmail = () => {
     
     setResending(true);
     try {
-      const success = await resendVerificationEmail();
-      if (!success) {
+      // Use email from state instead of requiring the user to be logged in
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin + "/verify-email"
+        }
+      });
+      
+      if (error) {
+        console.error("Error resending verification:", error);
         toast({
           title: "Error",
-          description: "Failed to send verification email. Please try again later.",
+          description: error.message || "Failed to send verification email. Please try again later.",
           variant: "destructive"
         });
       } else {
@@ -186,7 +205,7 @@ const VerifyEmail = () => {
           </CardHeader>
           <CardContent className="text-center">
             <p className="mb-4">
-              We've sent a verification link to <strong>{user?.email}</strong>.
+              We've sent a verification link to <strong>{email}</strong>.
               Check your inbox and click the link to verify your account.
             </p>
             <p className="text-sm text-gray-500">
