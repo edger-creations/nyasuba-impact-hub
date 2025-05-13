@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
 
 // Login form schema
 const loginFormSchema = z.object({
@@ -32,6 +33,22 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerifiedMessage, setShowVerifiedMessage] = useState(false);
+  
+  // Check if user was redirected from email verification
+  useEffect(() => {
+    // Check for email_verified query parameter
+    const searchParams = new URLSearchParams(location.search);
+    const emailVerified = searchParams.get("email_verified");
+    
+    if (emailVerified === "true") {
+      setShowVerifiedMessage(true);
+      
+      // Remove the query parameter from URL for cleanliness
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [location]);
   
   // Get redirect URL from query params if present
   const searchParams = new URLSearchParams(location.search);
@@ -70,6 +87,15 @@ const Login = () => {
               Welcome back! Please enter your details.
             </p>
           </div>
+          
+          {showVerifiedMessage && (
+            <Alert className="mb-6 bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300">
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                Your email has been verified successfully! You can now log in with your credentials.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <Form {...form}>

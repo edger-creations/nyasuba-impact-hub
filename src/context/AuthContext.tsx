@@ -149,8 +149,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (!data.user.email_confirmed_at) {
           toast({
             title: "Warning",
-            description: "Please verify your email to access all features"
+            description: "Please verify your email to access all features",
+            variant: "default"
           });
+          
+          // Redirect to verify email page if email is not confirmed
+          navigate("/verify-email");
+          return;
         }
         
         navigate("/");
@@ -176,7 +181,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           data: {
             first_name: name.split(' ')[0],
             last_name: name.split(' ').slice(1).join(' ')
-          }
+          },
+          emailRedirectTo: window.location.origin + "/verify-email" // Set redirect URL for email verification
         }
       });
       
@@ -188,22 +194,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (data.user) {
-        // Check for email confirmation status
-        if (data.user.email_confirmed_at === null) {
-          console.log("Email verification required");
-          toast({
-            title: "Account created!",
-            description: "Please check your email for verification instructions."
-          });
-          navigate("/verify-email");
-        } else {
-          console.log("Email already verified");
-          toast({
-            title: "Account created!",
-            description: "Your account has been created successfully."
-          });
-          navigate("/");
-        }
+        // Always redirect to verify-email page after signup
+        // We don't check email_confirmed_at here because it will always be null on signup
+        toast({
+          title: "Account created!",
+          description: "Please check your email for verification instructions.",
+          variant: "default"
+        });
+        navigate("/verify-email");
       } else {
         console.error("No user data returned from signup");
         throw new Error("Failed to create account. Please try again.");
@@ -269,14 +267,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: user.email
+        email: user.email,
+        options: {
+          emailRedirectTo: window.location.origin + "/verify-email"
+        }
       });
       
       if (error) throw error;
       
       toast({
         title: "Success",
-        description: "Verification email sent! Please check your inbox."
+        description: "Verification email sent! Please check your inbox.",
+        variant: "default"
       });
       return true;
     } catch (error) {

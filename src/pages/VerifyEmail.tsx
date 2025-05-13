@@ -7,31 +7,86 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const VerifyEmail = () => {
   const { user, isVerified, resendVerificationEmail, checkVerification } = useAuth();
   const [resending, setResending] = useState(false);
+  const [verificationChecked, setVerificationChecked] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Handle token from URL if present (user clicked email link)
+  useEffect(() => {
+    const handleEmailConfirmation = async () => {
+      // Get the URL fragment after the # symbol
+      const hash = window.location.hash;
+      
+      if (hash && hash.includes('type=signup')) {
+        try {
+          // Parse the hash fragment
+          const params = new URLSearchParams(hash.substring(1));
+          const type = params.get('type');
+          const token = params.get('access_token');
+          
+          if (type === 'signup' && token) {
+            // Set the auth token from the URL to confirm the email
+            const { error } = await supabase.auth.setSession({
+              access_token: token,
+              refresh_token: '',
+            });
+            
+            if (error) {
+              console.error('Error setting session:', error);
+              toast({
+                title: "Verification failed",
+                description: "There was an issue verifying your email. Please try again.",
+                variant: "destructive"
+              });
+            } else {
+              // Email confirmed successfully
+              toast({
+                title: "Email verified successfully!",
+                description: "Please log in with your credentials to continue.",
+                variant: "default"
+              });
+              
+              // Redirect to login after a short delay
+              setTimeout(() => {
+                navigate('/login');
+              }, 2000);
+            }
+          }
+        } catch (error) {
+          console.error('Error handling email confirmation:', error);
+        }
+      }
+    };
+    
+    handleEmailConfirmation();
+  }, [navigate]);
   
   // Check verification status on mount and periodically
   useEffect(() => {
     // Check verification status on component mount
     if (user && !isVerified) {
-      checkVerification();
-    }
-    
-    // If user is verified, redirect to login after a brief delay
-    if (isVerified) {
-      toast({
-        title: "Email verified successfully!",
-        description: "Please log in to continue.",
-        variant: "default"
+      checkVerification().then(verified => {
+        setVerificationChecked(true);
+        
+        if (verified) {
+          toast({
+            title: "Email verified successfully!",
+            description: "Please log in to continue.",
+            variant: "default"
+          });
+          
+          setTimeout(() => {
+            navigate("/login");
+          }, 3000);
+        }
       });
-      
-      setTimeout(() => {
-        navigate("/login");
-      }, 3000);
+    } else {
+      setVerificationChecked(true);
     }
     
     // Set up interval to check verification status
@@ -66,6 +121,12 @@ const VerifyEmail = () => {
           title: "Error",
           description: "Failed to send verification email. Please try again later.",
           variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Email sent",
+          description: "A new verification email has been sent to your inbox.",
+          variant: "default"
         });
       }
     } catch (error) {

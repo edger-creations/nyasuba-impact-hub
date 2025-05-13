@@ -1,1 +1,9 @@
+
 project_id = "frlpuhozzbcmttahbskb"
+
+# Supabase Configuration for Authentication
+[auth]
+site_url = "https://preview--nyasuba-impact-hub.lovable.app"
+additional_redirect_urls = ["https://nyasuba-impact-hub.lovable.app", "http://localhost:3000"]
+enable_signup = true
+enable_email_verification = true
