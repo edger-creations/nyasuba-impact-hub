@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 type User = {
@@ -187,17 +187,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Check for email confirmation status
         if (data.user.email_confirmed_at === null) {
           console.log("Email verification required");
-          toast({
-            title: "Account created!",
-            description: "Please check your email for verification instructions.",
-          });
+          toast.success("Account created! Please check your email for verification instructions.");
           navigate("/verify-email");
         } else {
           console.log("Email already verified");
-          toast({
-            title: "Account created!",
-            description: "Your account has been created successfully.",
-          });
+          toast.success("Account created! Your account has been created successfully.");
           navigate("/");
         }
       } else {
