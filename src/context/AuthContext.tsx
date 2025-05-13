@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toast";
 import { supabase } from "@/integrations/supabase/client";
 
 type User = {
@@ -146,7 +146,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (data.user) {
         // Check if verification is needed
         if (!data.user.email_confirmed_at) {
-          toast.warning("Please verify your email to access all features");
+          toast({
+            title: "Warning",
+            description: "Please verify your email to access all features"
+          });
         }
         
         navigate("/");
@@ -187,11 +190,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Check for email confirmation status
         if (data.user.email_confirmed_at === null) {
           console.log("Email verification required");
-          toast.success("Account created! Please check your email for verification instructions.");
+          toast({
+            title: "Account created!",
+            description: "Please check your email for verification instructions."
+          });
           navigate("/verify-email");
         } else {
           console.log("Email already verified");
-          toast.success("Account created! Your account has been created successfully.");
+          toast({
+            title: "Account created!",
+            description: "Your account has been created successfully."
+          });
           navigate("/");
         }
       } else {
@@ -223,7 +232,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
-      toast.error("Failed to log out");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out"
+      });
     }
   };
 
@@ -260,7 +273,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (error) throw error;
       
-      toast.success("Verification email sent! Please check your inbox.");
+      toast({
+        title: "Success",
+        description: "Verification email sent! Please check your inbox."
+      });
       return true;
     } catch (error) {
       console.error("Error resending verification:", error);

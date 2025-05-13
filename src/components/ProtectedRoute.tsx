@@ -1,7 +1,7 @@
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { ReactNode, useEffect } from "react";
 
 type ProtectedRouteProps = {
@@ -51,12 +51,20 @@ const ProtectedRoute = ({
   // Admin routes check
   if (location.pathname.startsWith("/admin")) {
     if (!isAuthenticated) {
-      toast.error("You must be logged in to access the admin area");
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You must be logged in to access the admin area"
+      });
       return <Navigate to="/login" state={{ from: location }} />;
     }
     
     if (!user?.isAdmin) {
-      toast.error("You don't have permission to access the admin area");
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You don't have permission to access the admin area"
+      });
       return <Navigate to="/" />;
     }
     
@@ -65,20 +73,32 @@ const ProtectedRoute = ({
 
   // For regular protected routes
   if (requireAuth && !isAuthenticated) {
-    toast.error("Please login to access this page");
+    toast({
+      variant: "destructive",
+      title: "Access Denied",
+      description: "Please login to access this page"
+    });
     return <Navigate to="/login" state={{ from: location }} />;
   }
 
   // Check registration status
   if (requireRegistration && isAuthenticated && !isRegistered) {
     // Only redirect to signup if they're actually not registered
-    toast.error("Please complete registration to access this page");
+    toast({
+      variant: "destructive",
+      title: "Registration Required",
+      description: "Please complete registration to access this page"
+    });
     return <Navigate to="/signup" state={{ from: location }} />;
   }
 
   // Check verification status (if required for this route)
   if (requireVerification && isAuthenticated && !isVerified && !user?.isAdmin) {
-    toast.warning("Please verify your email to access this page");
+    toast({
+      variant: "warning",
+      title: "Verification Required",
+      description: "Please verify your email to access this page"
+    });
     return <Navigate to="/verify-email" state={{ from: location }} />;
   }
 
