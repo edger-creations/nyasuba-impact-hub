@@ -23,7 +23,12 @@ const VerifyEmail = () => {
     
     // If user is verified, redirect to login after a brief delay
     if (isVerified) {
-      toast.success("Email verified successfully! Please log in to continue.");
+      toast({
+        title: "Email verified successfully!",
+        description: "Please log in to continue.",
+        variant: "default"
+      });
+      
       setTimeout(() => {
         navigate("/login");
       }, 3000);
@@ -45,7 +50,11 @@ const VerifyEmail = () => {
   
   const handleResendVerification = async () => {
     if (!user) {
-      toast.error("You must be logged in to request a verification email");
+      toast({
+        title: "Error",
+        description: "You must be logged in to request a verification email",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -53,11 +62,19 @@ const VerifyEmail = () => {
     try {
       const success = await resendVerificationEmail();
       if (!success) {
-        toast.error("Failed to send verification email. Please try again later.");
+        toast({
+          title: "Error",
+          description: "Failed to send verification email. Please try again later.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error("Error resending verification:", error);
-      toast.error("An error occurred. Please try again later.");
+      toast({
+        title: "Error",
+        description: "An error occurred. Please try again later.",
+        variant: "destructive"
+      });
     } finally {
       setResending(false);
     }

@@ -95,7 +95,7 @@ const ProtectedRoute = ({
   // Check verification status (if required for this route)
   if (requireVerification && isAuthenticated && !isVerified && !user?.isAdmin) {
     toast({
-      variant: "warning",
+      variant: "default", // Changed from "warning" to "default"
       title: "Verification Required",
       description: "Please verify your email to access this page"
     });
