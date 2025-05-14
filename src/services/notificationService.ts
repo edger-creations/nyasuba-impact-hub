@@ -73,18 +73,17 @@ export const sendEventNotifications = async (
           .order('date', { ascending: false })
           .limit(100); // Limit to recent donors
           
-        // Extract unique donors - Fix the type error by accessing each item properly
+        // Extract unique donors
         const uniqueDonors = new Map();
         
         if (data) {
           data.forEach(item => {
             // Access the profiles object for the current item
-            const profile = item.profiles;
-            if (profile && !uniqueDonors.has(profile.id)) {
-              uniqueDonors.set(profile.id, {
-                id: profile.id,
-                email: profile.email,
-                name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+            if (item.profiles && !uniqueDonors.has(item.profiles.id)) {
+              uniqueDonors.set(item.profiles.id, {
+                id: item.profiles.id,
+                email: item.profiles.email,
+                name: `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim()
               });
             }
           });
