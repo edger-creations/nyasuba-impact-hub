@@ -73,7 +73,7 @@ export const sendEventNotifications = async (
           .order('date', { ascending: false })
           .limit(100); // Limit to recent donors
           
-        // Extract unique donors
+        // Extract unique donors - FIX: Access item and then properties
         const uniqueDonors = new Map();
         (data || []).forEach(item => {
           const profile = item.profiles;
