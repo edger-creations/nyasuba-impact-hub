@@ -5,62 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Loader2 } from "lucide-react";
 import { ProgramForm } from "@/components/admin/programs/ProgramForm";
 import { ProgramsTable } from "@/components/admin/programs/ProgramsTable";
 import { Program } from "@/types/program";
-
-// This would come from an API in a real application
-const initialPrograms = [
-  {
-    id: "1",
-    title: "Shelter for the Poor",
-    description: "We build safe homes for vulnerable families, ensuring they have a secure place to thrive.",
-    action: "Get Involved",
-    link: "/volunteer",
-    image: "/placeholder.svg",
-  },
-  {
-    id: "2",
-    title: "Education Assistance",
-    description: "Providing scholarships and school supplies to underprivileged children for a brighter future.",
-    action: "Sponsor a Child",
-    link: "/donate",
-    image: "/placeholder.svg",
-  },
-  {
-    id: "3",
-    title: "Tree Planting",
-    description: "Promoting environmental sustainability through community-driven tree planting events.",
-    action: "Join the Initiative",
-    link: "/volunteer",
-    image: "/placeholder.svg",
-  },
-  {
-    id: "4",
-    title: "Women Empowerment (Inua Miji)",
-    description: "We empower women through training, resources, and micro-financing to uplift communities.",
-    action: "Support Women",
-    link: "/donate",
-    image: "/placeholder.svg",
-  },
-  {
-    id: "5",
-    title: "Food Cultivation",
-    description: "Creating sustainable food sources by cultivating community gardens and farms.",
-    action: "Contribute Now",
-    link: "/donate",
-    image: "/placeholder.svg",
-  },
-  {
-    id: "6",
-    title: "Mobility for Disabled",
-    description: "Financing medical treatment and providing mobility equipment for people with disabilities.",
-    action: "Donate Equipment",
-    link: "/donate",
-    image: "/placeholder.svg",
-  },
-];
+import { fetchPrograms, createProgram, updateProgram, deleteProgram } from "@/services/programService";
 
 const ProgramsAdmin = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -75,16 +24,24 @@ const ProgramsAdmin = () => {
     image: "/placeholder.svg",
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Load programs from localStorage or use initial data
+  // Load programs from the database
   useEffect(() => {
-    const storedPrograms = localStorage.getItem('programsData');
-    if (storedPrograms) {
-      setPrograms(JSON.parse(storedPrograms));
-    } else {
-      setPrograms(initialPrograms);
-      localStorage.setItem('programsData', JSON.stringify(initialPrograms));
-    }
+    const loadPrograms = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchPrograms();
+        setPrograms(data);
+      } catch (error) {
+        console.error("Error loading programs:", error);
+        toast.error("Failed to load programs. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPrograms();
   }, []);
 
   const filteredPrograms = programs.filter(program => 
@@ -92,46 +49,45 @@ const ProgramsAdmin = () => {
     program.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddOrEdit = () => {
+  const handleAddOrEdit = async () => {
     try {
-      let updatedPrograms;
+      let updatedProgram;
       
       if (isEditing) {
         // Update existing program
-        updatedPrograms = programs.map(p => p.id === currentProgram.id ? currentProgram : p);
-        toast.success("Program updated successfully!");
+        updatedProgram = await updateProgram(currentProgram.id, currentProgram);
+        if (updatedProgram) {
+          setPrograms(programs.map(p => p.id === currentProgram.id ? { ...updatedProgram, id: currentProgram.id } : p));
+          toast.success("Program updated successfully!");
+        }
       } else {
         // Add new program
-        const newProgram = {
-          ...currentProgram,
-          id: Date.now().toString(),
-        };
-        updatedPrograms = [...programs, newProgram];
-        toast.success("Program added successfully!");
+        const { id, ...programData } = currentProgram;
+        updatedProgram = await createProgram(programData);
+        if (updatedProgram) {
+          setPrograms([...programs, updatedProgram]);
+          toast.success("Program added successfully!");
+        }
       }
       
-      setPrograms(updatedPrograms);
-      // Store in localStorage to sync with user pages
-      localStorage.setItem('programsData', JSON.stringify(updatedPrograms));
-      
-      setIsDialogOpen(false);
-      resetForm();
+      if (updatedProgram) {
+        setIsDialogOpen(false);
+        resetForm();
+      }
     } catch (error) {
       toast.error("Failed to save program. Please try again.");
       console.error("Error saving program:", error);
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
       if (confirm("Are you sure you want to delete this program?")) {
-        const updatedPrograms = programs.filter(p => p.id !== id);
-        setPrograms(updatedPrograms);
-        
-        // Update localStorage
-        localStorage.setItem('programsData', JSON.stringify(updatedPrograms));
-        
-        toast.success("Program deleted successfully!");
+        const success = await deleteProgram(id);
+        if (success) {
+          setPrograms(programs.filter(p => p.id !== id));
+          toast.success("Program deleted successfully!");
+        }
       }
     } catch (error) {
       toast.error("Failed to delete program. Please try again.");
@@ -205,13 +161,19 @@ const ProgramsAdmin = () => {
           />
         </div>
         
-        <div className="rounded-md border">
-          <ProgramsTable
-            programs={filteredPrograms}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-enf-green" />
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <ProgramsTable
+              programs={filteredPrograms}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

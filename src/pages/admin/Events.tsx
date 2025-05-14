@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import NotificationModal from "@/components/admin/NotificationModal";
@@ -19,66 +19,63 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { EventForm, EventFormValues, eventFormSchema } from "@/components/admin/events/EventForm";
+import { EventForm, EventFormValues } from "@/components/admin/events/EventForm";
 import { EventCard } from "@/components/admin/events/EventCard";
 import { EventTable } from "@/components/admin/events/EventTable";
 import { Event } from "@/types/event";
 import { EventNotificationData } from "@/services/notificationService";
-
-const initialEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Community Outreach',
-    description: 'Join us for a day of giving back to the community with various activities and initiatives.',
-    location: 'Nairobi Community Center',
-    date: new Date('2025-05-15'),
-    time: '10:00 AM',
-    image: '',
-  },
-  {
-    id: '2',
-    title: 'Fundraising Gala',
-    description: 'Annual fundraising event to support our educational programs.',
-    location: 'Serena Hotel',
-    date: new Date('2025-06-20'),
-    time: '7:00 PM',
-    image: '',
-  }
-];
+import { fetchEvents, createEvent, updateEvent, deleteEvent } from "@/services/eventService";
 
 const AdminEvents = () => {
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
-  const handleAddEvent = (data: EventFormValues) => {
+  // Load events from the database
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setIsFetching(true);
+        const data = await fetchEvents();
+        setEvents(data);
+      } catch (error) {
+        toast.error("Failed to load events. Please refresh the page to try again.");
+        console.error("Error loading events:", error);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
+
+  const handleAddEvent = async (data: EventFormValues) => {
     setIsLoading(true);
     
     try {
-      setTimeout(() => {
-        const newEvent: Event = {
-          id: Date.now().toString(),
-          title: data.title,
-          description: data.description,
-          location: data.location,
-          date: data.date,
-          time: data.time,
-          image: data.image || '',
-        };
-        
+      const newEvent = await createEvent({
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        date: data.date,
+        time: data.time,
+        image: data.image || '/placeholder.svg',
+      });
+      
+      if (newEvent) {
         setEvents([...events, newEvent]);
         setIsAddDialogOpen(false);
-        setIsLoading(false);
-        
         toast.success("Event created successfully!");
-      }, 800);
+      }
     } catch (error) {
-      setIsLoading(false);
       toast.error("Failed to create event. Please try again.");
       console.error("Error creating event:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,7 +84,7 @@ const AdminEvents = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateEvent = (data: EventFormValues) => {
+  const handleUpdateEvent = async (data: EventFormValues) => {
     setIsLoading(true);
     
     if (!selectedEvent) {
@@ -96,50 +93,46 @@ const AdminEvents = () => {
     }
     
     try {
-      setTimeout(() => {
-        const updatedEvents = events.map(event => 
-          event.id === selectedEvent.id 
-            ? { 
-                ...event, 
-                title: data.title,
-                description: data.description,
-                location: data.location,
-                date: data.date,
-                time: data.time,
-                image: data.image || '',
-              } 
-            : event
-        );
-        
-        setEvents(updatedEvents);
+      const updatedEvent = await updateEvent(selectedEvent.id, {
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        date: data.date,
+        time: data.time,
+        image: data.image || '/placeholder.svg',
+      });
+      
+      if (updatedEvent) {
+        setEvents(events.map(event => 
+          event.id === selectedEvent.id ? updatedEvent : event
+        ));
         setIsEditDialogOpen(false);
         setSelectedEvent(null);
-        setIsLoading(false);
-        
         toast.success("Event updated successfully!");
-      }, 800);
+      }
     } catch (error) {
-      setIsLoading(false);
       toast.error("Failed to update event. Please try again.");
       console.error("Error updating event:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDeleteEvent = (id: string) => {
+  const handleDeleteEvent = async (id: string) => {
     setIsLoading(true);
     
     try {
-      setTimeout(() => {
-        const filteredEvents = events.filter(event => event.id !== id);
-        setEvents(filteredEvents);
-        setIsLoading(false);
-        
+      const success = await deleteEvent(id);
+      
+      if (success) {
+        setEvents(events.filter(event => event.id !== id));
         toast.success("Event deleted successfully!");
-      }, 800);
+      }
     } catch (error) {
-      setIsLoading(false);
       toast.error("Failed to delete event. Please try again.");
       console.error("Error deleting event:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -234,37 +227,47 @@ const AdminEvents = () => {
           </>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onEdit={handleEditEvent}
-              onDelete={handleDeleteEvent}
-              onNotify={handleSendNotifications}
-            />
-          ))}
-        </div>
-
-        {events.length === 0 && (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">No events found. Click "Add New Event" to create one.</p>
+        {isFetching ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-enf-green" />
           </div>
-        )}
+        ) : (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onEdit={handleEditEvent}
+                  onDelete={handleDeleteEvent}
+                  onNotify={handleSendNotifications}
+                />
+              ))}
+            </div>
 
-        <div className="mt-10">
-          <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-          <Card>
-            <CardContent className="p-0">
-              <EventTable
-                events={events}
-                onEdit={handleEditEvent}
-                onDelete={handleDeleteEvent}
-                onNotify={handleSendNotifications}
-              />
-            </CardContent>
-          </Card>
-        </div>
+            {events.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No events found. Click "Add New Event" to create one.</p>
+              </div>
+            )}
+
+            {events.length > 0 && (
+              <div className="mt-10">
+                <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
+                <Card>
+                  <CardContent className="p-0">
+                    <EventTable
+                      events={events}
+                      onEdit={handleEditEvent}
+                      onDelete={handleDeleteEvent}
+                      onNotify={handleSendNotifications}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </AdminLayout>
   );

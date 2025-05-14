@@ -14,106 +14,33 @@ import { TreePine, Users, ShieldCheck, Home, Hammer, BookOpen, Image, Video } fr
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Define the gallery item interface to match the admin page
-interface GalleryItem {
-  id: string;
-  type: "image" | "video";
-  src: string;
-  alt: string;
-  description: string;
-  featured: boolean;
-  category?: string;
-}
+import { fetchGalleryItems, GalleryItem } from "@/services/galleryService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Gallery = () => {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch gallery items from localStorage on component mount
+  // Fetch gallery items from database
   useEffect(() => {
-    const storedItems = localStorage.getItem('galleryItems');
-    
-    if (storedItems) {
-      setGalleryItems(JSON.parse(storedItems));
-    } else {
-      // Fallback to default items if nothing in localStorage
-      setGalleryItems([
-        {
-          id: "1",
-          type: "image",
-          src: "/placeholder.svg",
-          alt: "Volunteering In Schools",
-          description: "Sometimes, it only requires minutes of our time to leave remarkable smiles in the face of humanity. Madam Esther Volunteered to help students with Creative Arts at a local school in Kenya.",
-          featured: false,
-          category: "education",
-        },
-        {
-          id: "2",
-          type: "image",
-          src: "/placeholder.svg",
-          alt: "Shelter For The Homeless",
-          description: "During floods in Kenya, 2024, most people lost their homes. We could not do enough but with the little we had, we built some few shelters for those in need. I believe if we all join hands in support of such initiatives, we will all make a big change for humanity.",
-          featured: false,
-          category: "shelter",
-        },
-        {
-          id: "3",
-          type: "image",
-          src: "/placeholder.svg",
-          alt: "Women & Community Empowerment",
-          description: "What if we teach them how to catch fish? For this reason, you have an opportunity to volunteer or even support ENF in empowering and educating the women and community at large on how to go about their livelihood.",
-          featured: false,
-          category: "empowerment",
-        },
-        {
-          id: "4",
-          type: "image",
-          src: "/placeholder.svg",
-          alt: "Relief Food To The Needy",
-          description: "There are some of us who have hardship having all or even all meals a day. Your relief food donations give them strength and hope of living.",
-          featured: false,
-          category: "food",
-        },
-        {
-          id: "5",
-          type: "image",
-          src: "/placeholder.svg",
-          alt: "Mobility Assistance To Disabled",
-          description: "It is our happiness to experience happiness with all humanity, including the disabled. We should always make them part of us!",
-          featured: false,
-          category: "mobility",
-        },
-        {
-          id: "6",
-          type: "image",
-          src: "/placeholder.svg",
-          alt: "Tree Planting",
-          description: "Our tree planting initiatives help combat climate change while creating sustainable green spaces for future generations.",
-          featured: false,
-          category: "environment",
-        },
-        {
-          id: "7",
-          type: "video",
-          src: "/placeholder.svg",
-          alt: "Tree Planting",
-          description: "We plant trees to save lives and save the future, it is a gospel that is underrated but saves humanity a lot. Plant a tree to save lives.",
-          featured: false,
-          category: "environment",
-        },
-        {
-          id: "8",
-          type: "video",
-          src: "/placeholder.svg",
-          alt: "Environment Conservation",
-          description: "Our tree planting initiatives help combat climate change while creating sustainable green spaces for future generations.",
-          featured: false,
-          category: "environment",
-        },
-      ]);
-    }
+    const loadGalleryItems = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchGalleryItems();
+        setGalleryItems(data);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to load gallery items:", err);
+        setError("Failed to load gallery items. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGalleryItems();
   }, []);
 
   // Get featured item for the hero section
@@ -135,7 +62,24 @@ const Gallery = () => {
           <p className="text-lg max-w-2xl mx-auto">
             Capturing moments that define our journey and community transformation.
           </p>
-          {featuredItem && (
+          
+          {loading ? (
+            <Card className="mt-8 max-w-4xl mx-auto bg-white/10 overflow-hidden">
+              <CardHeader className="pb-2">
+                <p className="text-sm uppercase tracking-wide">Featured</p>
+                <Skeleton className="h-8 w-1/3 bg-white/20" />
+              </CardHeader>
+              <CardContent className="pb-2">
+                <div className="max-h-[300px] overflow-hidden rounded-md">
+                  <Skeleton className="h-[300px] w-full bg-white/20" />
+                </div>
+                <div className="mt-4">
+                  <Skeleton className="h-4 w-full bg-white/20 mb-2" />
+                  <Skeleton className="h-4 w-2/3 bg-white/20" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : featuredItem ? (
             <Card className="mt-8 max-w-4xl mx-auto bg-white/10 overflow-hidden">
               <CardHeader className="pb-2">
                 <p className="text-sm uppercase tracking-wide">Featured</p>
@@ -178,7 +122,7 @@ const Gallery = () => {
                 </Button>
               </CardFooter>
             </Card>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -195,55 +139,76 @@ const Gallery = () => {
           </Tabs>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.length === 0 ? (
-            <div className="col-span-full text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <p className="text-muted-foreground">No items found in this category.</p>
-            </div>
-          ) : (
-            filteredItems.map((item, index) => (
-              <div 
-                key={item.id} 
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedItem(item)}
-                data-aos="fade-up"
-                data-aos-delay={index * 100}
-              >
-                <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
-                  {item.type === "image" ? (
-                    <img 
-                      src={item.src} 
-                      alt={item.alt} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="relative w-full h-full">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Video className="h-12 w-12 text-white/75" />
-                      </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array(6).fill(0).map((_, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <div className="p-4">
+                  <Skeleton className="h-6 w-2/3 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-10">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.length === 0 ? (
+              <div className="col-span-full text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-muted-foreground">No items found in this category.</p>
+              </div>
+            ) : (
+              filteredItems.map((item, index) => (
+                <div 
+                  key={item.id} 
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => setSelectedItem(item)}
+                  data-aos="fade-up"
+                  data-aos-delay={index * 100}
+                >
+                  <div className="h-48 bg-gray-200 dark:bg-gray-700 relative">
+                    {item.type === "image" ? (
                       <img 
                         src={item.src} 
                         alt={item.alt} 
-                        className="w-full h-full object-cover opacity-80"
+                        className="w-full h-full object-cover"
                       />
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Video className="h-12 w-12 text-white/75" />
+                        </div>
+                        <img 
+                          src={item.src} 
+                          alt={item.alt} 
+                          className="w-full h-full object-cover opacity-80"
+                        />
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2">
+                      <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                        {item.type}
+                      </span>
                     </div>
-                  )}
-                  <div className="absolute top-2 right-2">
-                    <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full">
-                      {item.type}
-                    </span>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg mb-1">{item.alt}</h3>
+                    <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
+                      {item.description}
+                    </p>
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-1">{item.alt}</h3>
-                  <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* CTA */}
         <div className="mt-16 text-center" data-aos="fade-up">

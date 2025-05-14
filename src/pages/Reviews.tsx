@@ -1,40 +1,40 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { QuoteIcon } from "lucide-react";
+import { QuoteIcon, Loader2 } from "lucide-react";
+import { Review, fetchApprovedReviews, submitReview } from "@/services/reviewService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Reviews = () => {
   const [newReview, setNewReview] = useState({
     name: "",
     content: "",
+    rating: 5
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testimonials, setTestimonials] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const testimonials = [
-    {
-      id: 1,
-      name: "Chares Brand",
-      content: "The Esther Nyasuba Foundation embodies compassion and community empowerment, fostering growth through impactful programs. Its dedication to education, transparency, and volunteerism creates meaningful change, inspiring collective progress and hope.",
-      avatar: "/placeholder.svg",
-    },
-    {
-      id: 2,
-      name: "Edger Omondi",
-      content: "I have heard a lot about Esther Nyasuba Foundation. They are really doing a lot to save humanity.",
-      avatar: "/placeholder.svg",
-    },
-    {
-      id: 3,
-      name: "Susan Njeri",
-      content: "The women empowerment program 'Inua Miji' transformed my business. I gained new skills and confidence to succeed as an entrepreneur.",
-      avatar: "/placeholder.svg",
-    },
-  ];
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        setLoading(true);
+        const reviews = await fetchApprovedReviews();
+        setTestimonials(reviews);
+      } catch (error) {
+        console.error("Error loading reviews:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReviews();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -49,11 +49,11 @@ const Reviews = () => {
     setIsSubmitting(true);
 
     try {
-      // In a real application, you would send this data to your backend
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const success = await submitReview(newReview);
       
-      toast.success("Thank you for sharing your experience!");
-      setNewReview({ name: "", content: "" });
+      if (success) {
+        setNewReview({ name: "", content: "", rating: 5 });
+      }
     } catch (error) {
       toast.error("There was an error submitting your review. Please try again.");
       console.error("Error submitting review:", error);
@@ -76,31 +76,54 @@ const Reviews = () => {
 
       {/* Testimonials */}
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((testimonial, index) => (
-            <div 
-              key={testimonial.id} 
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 relative"
-              data-aos="fade-up"
-              data-aos-delay={index * 100}
-            >
-              <QuoteIcon className="absolute top-4 right-4 h-6 w-6 text-gray-200 dark:text-gray-700" />
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                  <img
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                    className="w-full h-full object-cover"
-                  />
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array(3).fill(0).map((_, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 relative">
+                <QuoteIcon className="absolute top-4 right-4 h-6 w-6 text-gray-200 dark:text-gray-700" />
+                <div className="flex items-center gap-3 mb-4">
+                  <Skeleton className="w-12 h-12 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
                 </div>
-                <h3 className="font-semibold">{testimonial.name}</h3>
+                <div>
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
               </div>
-              <p className="text-gray-600 dark:text-gray-300 italic">
-                "{testimonial.content}"
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : testimonials.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-muted-foreground">No reviews available yet. Be the first to share your experience!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, index) => (
+              <div 
+                key={testimonial.id} 
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 relative"
+                data-aos="fade-up"
+                data-aos-delay={index * 100}
+              >
+                <QuoteIcon className="absolute top-4 right-4 h-6 w-6 text-gray-200 dark:text-gray-700" />
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <img
+                      src={testimonial.avatar || "/placeholder.svg"}
+                      alt={testimonial.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <h3 className="font-semibold">{testimonial.name}</h3>
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 italic">
+                  "{testimonial.content}"
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Review Form */}
         <div className="mt-16 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="200">
@@ -138,7 +161,12 @@ const Reviews = () => {
               className="bg-enf-green hover:bg-enf-dark-green"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit Review"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : "Submit Review"}
             </Button>
           </form>
         </div>
