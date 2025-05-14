@@ -4,7 +4,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -34,17 +34,31 @@ const Login = () => {
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showVerifiedMessage, setShowVerifiedMessage] = useState(false);
+  const [showResetSuccessMessage, setShowResetSuccessMessage] = useState(false);
   
-  // Check if user was redirected from email verification
+  // Check for various query parameters
   useEffect(() => {
-    // Check for email_verified query parameter
+    // Check URL parameters
     const searchParams = new URLSearchParams(location.search);
-    const emailVerified = searchParams.get("email_verified");
     
+    // Check for email verification success
+    const emailVerified = searchParams.get("email_verified");
     if (emailVerified === "true") {
       setShowVerifiedMessage(true);
-      
-      // Remove the query parameter from URL for cleanliness
+    }
+    
+    // Check for password reset success
+    const resetSuccess = searchParams.get("resetSuccess");
+    if (resetSuccess === "true") {
+      setShowResetSuccessMessage(true);
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully reset. You can now log in with your new password.",
+      });
+    }
+    
+    // Remove query parameters from URL for cleanliness
+    if (emailVerified || resetSuccess) {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
@@ -69,8 +83,12 @@ const Login = () => {
       await login(values.email, values.password, (path) => navigate(path));
       toast.success("Login successful!");
       // No need to navigate here as login function will do it
-    } catch (error) {
-      toast.error("Login failed. Please check your credentials and try again.");
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive",
+      });
       console.error("Login error:", error);
     } finally {
       setIsSubmitting(false);
@@ -93,6 +111,15 @@ const Login = () => {
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
                 Your email has been verified successfully! You can now log in with your credentials.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {showResetSuccessMessage && (
+            <Alert className="mb-6 bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300">
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                Your password has been reset successfully! You can now log in with your new password.
               </AlertDescription>
             </Alert>
           )}

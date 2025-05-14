@@ -5,7 +5,8 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -21,14 +22,25 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
 
     try {
-      // In a real application, you would send this to your backend
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Send password reset email through Supabase
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/login?resetSuccess=true",
+      });
+      
+      if (error) throw error;
       
       setIsSubmitted(true);
-      toast.success("Password reset instructions have been sent to your email.");
-    } catch (error) {
-      toast.error("There was an error processing your request. Please try again.");
+      toast({
+        title: "Reset link sent",
+        description: "Password reset instructions have been sent to your email.",
+      });
+    } catch (error: any) {
       console.error("Password reset error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "There was an error processing your request. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -75,7 +87,7 @@ const ForgotPassword = () => {
                     className="w-full bg-enf-green hover:bg-enf-dark-green"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Processing..." : "Request Reset Code"}
+                    {isSubmitting ? "Processing..." : "Request Reset Link"}
                   </Button>
                 </form>
 
