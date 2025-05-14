@@ -1,9 +1,22 @@
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { 
+  CheckCircle2, 
+  XCircle, 
+  Search, 
+  Shield, 
+  Users as UsersIcon,
+  UserCheck,
+  Loader2
+} from "lucide-react";
+
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -13,546 +26,272 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { toast } from "sonner";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { User, Plus, Pencil, Trash2, Search } from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-// User type from the auth context
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  isAdmin?: boolean;
-};
+import { User, fetchUsers, updateUserVerificationStatus, getUserStats } from "@/services/userService";
 
-// Form schema for adding/editing users
-const userFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters." }),
-  isAdmin: z.boolean().default(false),
-});
-
-type UserFormValues = z.infer<typeof userFormSchema>;
-
-const AdminUsers = () => {
+const UsersAdmin = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
-  // Form setup
-  const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      isAdmin: false,
-    },
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    verifiedUsers: 0,
+    adminUsers: 0,
   });
-
-  // Edit form setup
-  const editForm = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      isAdmin: false,
-    },
-  });
+  const [processingIds, setProcessingIds] = useState<string[]>([]);
 
   useEffect(() => {
-    // In a real app, this would be an API call
-    // For demo purposes, we'll use mock data
-    const fetchUsers = async () => {
+    const loadUsers = async () => {
       try {
-        // Mock data
-        const mockUsers = [
-          {
-            id: "user-1",
-            name: "John Doe",
-            email: "john@example.com",
-            isAdmin: false,
-          },
-          {
-            id: "user-2",
-            name: "Jane Smith",
-            email: "jane@example.com",
-            isAdmin: false,
-          },
-          {
-            id: "admin-1",
-            name: "Administrator",
-            email: "admin@esthernyasubafoundation.org",
-            isAdmin: true,
-          },
-          {
-            id: "user-3",
-            name: "Bob Johnson",
-            email: "bob@example.com",
-            isAdmin: false,
-          },
-          {
-            id: "user-4",
-            name: "Alice Williams",
-            email: "alice@example.com",
-            isAdmin: false,
-          },
-        ];
-
-        setUsers(mockUsers);
-        setLoading(false);
+        setLoading(true);
+        const usersData = await fetchUsers();
+        setUsers(usersData);
+        setFilteredUsers(usersData);
+        
+        const statsData = await getUserStats();
+        setStats({
+          totalUsers: statsData.totalUsers,
+          verifiedUsers: statsData.verifiedUsers,
+          adminUsers: statsData.adminUsers,
+        });
       } catch (error) {
-        console.error("Error fetching users:", error);
-        toast.error("Failed to load users");
+        console.error("Error loading users:", error);
+        toast.error("Failed to load users data. Please try again.");
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchUsers();
+    loadUsers();
   }, []);
 
-  // Filter users based on search term
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredUsers(users);
+    } else {
+      const lowerSearch = searchTerm.toLowerCase();
+      setFilteredUsers(
+        users.filter(
+          user =>
+            user.name?.toLowerCase().includes(lowerSearch) ||
+            user.email.toLowerCase().includes(lowerSearch)
+        )
+      );
+    }
+  }, [searchTerm, users]);
 
-  // Handle adding a new user
-  const handleAddUser = (values: UserFormValues) => {
-    // In a real app, this would be an API call
-    const newUser = {
-      id: `user-${Date.now()}`,
-      name: values.name,
-      email: values.email,
-      isAdmin: values.isAdmin,
-    };
-
-    setUsers([...users, newUser]);
-    toast.success("User added successfully");
-    setIsAddDialogOpen(false);
-    form.reset();
+  const handleVerificationChange = async (userId: string, isVerified: boolean) => {
+    setProcessingIds(prev => [...prev, userId]);
+    
+    try {
+      const success = await updateUserVerificationStatus(userId, isVerified);
+      
+      if (success) {
+        // Update local state to reflect the change
+        setUsers(users.map(user => 
+          user.id === userId 
+            ? { ...user, is_verified: isVerified } 
+            : user
+        ));
+        
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          verifiedUsers: isVerified
+            ? prev.verifiedUsers + 1
+            : Math.max(0, prev.verifiedUsers - 1),
+          adminUsers: isVerified
+            ? prev.adminUsers + 1
+            : Math.max(0, prev.adminUsers - 1)
+        }));
+      }
+    } catch (error) {
+      console.error("Error updating user verification status:", error);
+    } finally {
+      setProcessingIds(prev => prev.filter(id => id !== userId));
+    }
   };
 
-  // Handle editing a user
-  const handleEditUser = (values: UserFormValues) => {
-    if (!selectedUser) return;
-
-    // In a real app, this would be an API call
-    const updatedUsers = users.map((user) =>
-      user.id === selectedUser.id
-        ? {
-            ...user,
-            name: values.name,
-            email: values.email,
-            isAdmin: values.isAdmin,
-          }
-        : user
-    );
-
-    setUsers(updatedUsers);
-    toast.success("User updated successfully");
-    setIsEditDialogOpen(false);
-    setSelectedUser(null);
-    editForm.reset();
-  };
-
-  // Handle deleting a user
-  const handleDeleteUser = () => {
-    if (!selectedUser) return;
-
-    // In a real app, this would be an API call
-    const updatedUsers = users.filter((user) => user.id !== selectedUser.id);
-    setUsers(updatedUsers);
-    toast.success("User deleted successfully");
-    setIsDeleteDialogOpen(false);
-    setSelectedUser(null);
-  };
-
-  // Open edit dialog and populate form
-  const openEditDialog = (user: User) => {
-    setSelectedUser(user);
-    editForm.reset({
-      name: user.name,
-      email: user.email,
-      password: "", // Don't populate password for security
-      isAdmin: user.isAdmin || false,
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  // Open delete dialog
-  const openDeleteDialog = (user: User) => {
-    setSelectedUser(user);
-    setIsDeleteDialogOpen(true);
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
     <AdminLayout>
       <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">User Management</h1>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-enf-green hover:bg-enf-dark-green">
-                <Plus className="h-4 w-4 mr-2" /> Add User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-                <DialogDescription>
-                  Create a new user account with the following details.
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(handleAddUser)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="Enter email"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Enter password"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="isAdmin"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <input
-                            type="checkbox"
-                            checked={field.value}
-                            onChange={field.onChange}
-                            className="h-4 w-4 rounded border-gray-300 text-enf-green focus:ring-enf-green"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Admin Privileges</FormLabel>
-                          <p className="text-sm text-gray-500">
-                            Grant admin access to this user
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsAddDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="bg-enf-green hover:bg-enf-dark-green"
-                    >
-                      Add User
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+        <h1 className="text-2xl font-bold mb-6">User Management</h1>
+
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <UsersIcon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Verified</CardTitle>
+              <UserCheck className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.verifiedUsers}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Admins</CardTitle>
+              <Shield className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.adminUsers}</div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search users by name or email"
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="mb-6 relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-md border">
+          <div className="p-4">
+            <h2 className="text-lg font-medium">User List</h2>
           </div>
-        </div>
-
-        {/* Users Table */}
-        <Card>
-          <CardContent className="p-0">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-enf-green" />
+            </div>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead className="w-[50px]">Avatar</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">
-                      <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-enf-green"></div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6">
+                    <TableCell colSpan={6} className="text-center py-6">
                       No users found
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        {user.isAdmin ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Admin
+                        <Avatar>
+                          <AvatarImage src={user.avatar_url || undefined} />
+                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className="font-medium">{user.name || "Unnamed"}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{format(new Date(user.created_at), "PPP")}</TableCell>
+                      <TableCell>
+                        {user.is_verified ? (
+                          <span className="flex items-center gap-1 text-green-500">
+                            <CheckCircle2 className="h-4 w-4" /> Verified
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            User
+                          <span className="flex items-center gap-1 text-gray-500">
+                            <XCircle className="h-4 w-4" /> Unverified
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(user)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openDeleteDialog(user)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <TableCell>
+                        {processingIds.includes(user.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : user.is_verified ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">Revoke Admin</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Revoke Admin Access</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to revoke admin access for {user.name || user.email}? 
+                                  This user will no longer be able to access the admin dashboard.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleVerificationChange(user.id, false)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Revoke Access
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="text-blue-500">
+                                Grant Admin
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Grant Admin Access</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to grant admin access to {user.name || user.email}? 
+                                  This user will be able to access all admin features and modify content.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleVerificationChange(user.id, true)}
+                                >
+                                  Grant Access
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-
-        {/* Edit User Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
-              <DialogDescription>
-                Update user account details.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...editForm}>
-              <form
-                onSubmit={editForm.handleSubmit(handleEditUser)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={editForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="Enter email"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password (leave blank to keep unchanged)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Enter new password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name="isAdmin"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={field.onChange}
-                          className="h-4 w-4 rounded border-gray-300 text-enf-green focus:ring-enf-green"
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Admin Privileges</FormLabel>
-                        <p className="text-sm text-gray-500">
-                          Grant admin access to this user
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-enf-green hover:bg-enf-dark-green"
-                  >
-                    Update User
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete User Dialog */}
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete User</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this user? This action cannot be
-                undone.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-2">
-              {selectedUser && (
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <p>
-                    <strong>Name:</strong> {selectedUser.name}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {selectedUser.email}
-                  </p>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDeleteUser}
-              >
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );
 };
 
-export default AdminUsers;
+export default UsersAdmin;

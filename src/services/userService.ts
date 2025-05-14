@@ -1,129 +1,145 @@
 
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-// Mock user data for demo purposes
-const MOCK_USERS = [
-  {
-    id: "user1",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+254712345678",
-    isRegistered: true,
-    isVerified: true,
-  },
-  {
-    id: "user2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    phone: "+254723456789",
-    isRegistered: true,
-    isVerified: true,
-  },
-  {
-    id: "user3",
-    name: "Robert Johnson",
-    email: "robert@example.com",
-    phone: "+254734567890",
-    isRegistered: true,
-    isVerified: true,
-  },
-  {
-    id: "user4",
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    isRegistered: true,
-    isVerified: true,
-  },
-  {
-    id: "user5",
-    name: "Michael Brown",
-    email: "michael@example.com",
-    phone: "+254745678901",
-    isRegistered: true,
-    isVerified: true,
-  }
-];
+import { toast } from "sonner";
 
 export interface User {
   id: string;
-  name: string;
   email: string;
-  phone?: string;
-  isRegistered: boolean;
-  isVerified?: boolean;
+  name?: string;
+  role?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+  created_at: Date;
+  last_sign_in?: Date | null;
+  roles?: string[];
 }
 
 /**
- * Get all registered users
+ * Fetch all users from the database
  */
-export const getRegisteredUsers = async (): Promise<User[]> => {
+export const fetchUsers = async (): Promise<User[]> => {
   try {
-    // For demo purposes - in a real app, this would fetch users from Supabase
-    return MOCK_USERS.filter(user => user.isRegistered);
-  } catch (error) {
-    console.error("Error fetching registered users:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    toast.error(`Failed to fetch users: ${errorMessage}`);
-    return [];
-  }
-};
-
-/**
- * Get users with phone numbers
- */
-export const getUsersWithPhoneNumbers = async (): Promise<User[]> => {
-  try {
-    // For demo purposes - in a real app, this would fetch users from Supabase
-    return MOCK_USERS.filter(user => user.isRegistered && user.phone);
-  } catch (error) {
-    console.error("Error fetching users with phone numbers:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    toast.error(`Failed to fetch users with phone numbers: ${errorMessage}`);
-    return [];
-  }
-};
-
-/**
- * Get a user by ID
- */
-export const getUserById = async (userId: string): Promise<User | null> => {
-  try {
-    // For demo purposes - in a real app, this would fetch the user from Supabase
-    const user = MOCK_USERS.find(user => user.id === userId);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        user_roles(role)
+      `);
     
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
+    if (error) {
+      throw error;
     }
     
-    return user;
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    
+    return data.map(profile => {
+      const authUser = authUsers.users.find(u => u.id === profile.id);
+      
+      return {
+        id: profile.id,
+        email: profile.email,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        avatar_url: profile.avatar_url,
+        is_verified: profile.is_verified,
+        roles: profile.user_roles ? profile.user_roles.map((r: any) => r.role) : ['user'],
+        created_at: new Date(profile.created_at),
+        last_sign_in: authUser?.last_sign_in_at ? new Date(authUser.last_sign_in_at) : null,
+      };
+    });
   } catch (error) {
-    console.error(`Error fetching user with ID ${userId}:`, error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    toast.error(`Failed to fetch user: ${errorMessage}`);
-    return null;
+    console.error("Error fetching users:", error);
+    
+    // Fallback to just fetching profiles if auth admin API fails
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) throw error;
+      
+      return data.map(profile => ({
+        id: profile.id,
+        email: profile.email,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        avatar_url: profile.avatar_url,
+        is_verified: profile.is_verified,
+        created_at: new Date(profile.created_at),
+      }));
+    } catch (fallbackError) {
+      console.error("Fallback error fetching users:", fallbackError);
+      toast.error("Failed to load users. Please try again.");
+      return [];
+    }
   }
 };
 
 /**
- * Check if a user's email is verified
+ * Update a user's verification status
  */
-export const isEmailVerified = async (userId: string): Promise<boolean> => {
+export const updateUserVerificationStatus = async (userId: string, isVerified: boolean): Promise<boolean> => {
   try {
-    // In a production app, we'd check directly with Supabase
-    const { data } = await supabase.auth.getUser();
-    return data.user?.email_confirmed_at !== null;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_verified: isVerified })
+      .eq('id', userId);
+    
+    if (error) {
+      throw error;
+    }
+    
+    toast.success(`User ${isVerified ? 'verified' : 'unverified'} successfully`);
+    return true;
   } catch (error) {
-    console.error("Error checking email verification status:", error);
+    console.error("Error updating user verification status:", error);
+    toast.error("Failed to update user verification status. Please try again.");
     return false;
   }
 };
 
 /**
- * Verify email with token - this is now handled by Supabase automatically
+ * Get user statistics
  */
-export const verifyEmailWithToken = async (userId: string, token: string): Promise<boolean> => {
-  // This function is now a stub since verification is handled by Supabase's built-in flow
-  console.log("Email verification is now handled by Supabase automatically");
-  return true;
+export const getUserStats = async (): Promise<{
+  totalUsers: number;
+  verifiedUsers: number;
+  adminUsers: number;
+  recentUsers: User[];
+}> => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
+    }
+    
+    const verifiedUsers = data.filter(user => user.is_verified).length;
+    const adminUsers = data.filter(user => user.is_verified).length; // In this simple system, verified users are admins
+    
+    const recentUsers = data.slice(0, 5).map(profile => ({
+      id: profile.id,
+      email: profile.email,
+      name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+      avatar_url: profile.avatar_url,
+      is_verified: profile.is_verified,
+      created_at: new Date(profile.created_at),
+    }));
+    
+    return {
+      totalUsers: data.length,
+      verifiedUsers,
+      adminUsers,
+      recentUsers,
+    };
+  } catch (error) {
+    console.error("Error fetching user statistics:", error);
+    return {
+      totalUsers: 0,
+      verifiedUsers: 0,
+      adminUsers: 0,
+      recentUsers: [],
+    };
+  }
 };

@@ -1,318 +1,257 @@
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { 
+  CheckCircle2, 
+  Clock, 
+  XCircle, 
+  CreditCard, 
+  Loader2 
+} from "lucide-react";
+
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Search, Eye, Download, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Donation, fetchDonations } from "@/services/donationService";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { Donation } from "@/types/donation";
+import { 
+  fetchDonations, 
+  updateDonationStatus, 
+  getDonationStats 
+} from "@/services/donationService";
 
 const DonationsAdmin = () => {
   const [donations, setDonations] = useState<Donation[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [dateFilter, setDateFilter] = useState("all_time");
+  const [stats, setStats] = useState({
+    totalAmount: 0,
+    totalDonations: 0,
+    completedDonations: 0,
+    processingDonations: 0,
+    failedDonations: 0
+  });
   const [loading, setLoading] = useState(true);
-  
+  const [processingIds, setProcessingIds] = useState<string[]>([]);
+
   useEffect(() => {
     const loadDonations = async () => {
       try {
         setLoading(true);
-        const data = await fetchDonations();
-        setDonations(data);
+        const donationsData = await fetchDonations();
+        setDonations(donationsData);
+        
+        const statsData = await getDonationStats();
+        setStats({
+          totalAmount: statsData.totalAmount,
+          totalDonations: statsData.totalDonations,
+          completedDonations: statsData.completedDonations,
+          processingDonations: statsData.processingDonations,
+          failedDonations: statsData.failedDonations
+        });
       } catch (error) {
         console.error("Error loading donations:", error);
+        toast.error("Failed to load donations data. Please try again.");
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadDonations();
   }, []);
 
-  // Calculate totals
-  const totalAmountKSH = donations
-    .filter(d => d.status === "completed" && d.currency === "KSH")
-    .reduce((sum, donation) => sum + donation.amount, 0);
-  
-  const totalAmountUSD = donations
-    .filter(d => d.status === "completed" && d.currency === "USD")
-    .reduce((sum, donation) => sum + donation.amount, 0);
-  
-  const totalDonations = donations.filter(d => d.status === "completed").length;
-
-  const filteredDonations = donations.filter(donation => {
-    // Search filter
-    const matchesSearch = 
-      donation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      donation.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      donation.method.toLowerCase().includes(searchTerm.toLowerCase());
+  const handleStatusChange = async (donationId: string, newStatus: 'processing' | 'completed' | 'failed') => {
+    setProcessingIds(prev => [...prev, donationId]);
     
-    // Status filter
-    const matchesStatus = 
-      activeTab === "all" ||
-      (activeTab === "completed" && donation.status === "completed") ||
-      (activeTab === "processing" && donation.status === "processing") ||
-      (activeTab === "failed" && donation.status === "failed");
-    
-    // Date filter
-    let matchesDate = true;
-    const donationDate = new Date(donation.date);
-    const today = new Date();
-    
-    if (dateFilter === "this_month") {
-      const thisMonth = today.getMonth();
-      const thisYear = today.getFullYear();
-      matchesDate = donationDate.getMonth() === thisMonth && donationDate.getFullYear() === thisYear;
-    } else if (dateFilter === "this_year") {
-      matchesDate = donationDate.getFullYear() === today.getFullYear();
+    try {
+      const success = await updateDonationStatus(donationId, newStatus);
+      
+      if (success) {
+        // Update local state to reflect the change
+        setDonations(donations.map(donation => 
+          donation.id === donationId 
+            ? { ...donation, status: newStatus } 
+            : donation
+        ));
+        
+        // Update stats
+        if (newStatus === 'completed') {
+          setStats(prev => ({
+            ...prev,
+            completedDonations: prev.completedDonations + 1,
+            processingDonations: prev.processingDonations - 1
+          }));
+        } else if (newStatus === 'failed') {
+          setStats(prev => ({
+            ...prev,
+            failedDonations: prev.failedDonations + 1,
+            processingDonations: prev.processingDonations - 1
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error updating donation status:", error);
+    } finally {
+      setProcessingIds(prev => prev.filter(id => id !== donationId));
     }
-    
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-
-  const handleViewDetails = (donation: Donation) => {
-    setSelectedDonation(donation);
-    setIsViewDialogOpen(true);
-  };
-
-  const handleExportDonations = () => {
-    // In a real app, this would generate a CSV or PDF
-    const csvContent = [
-      ["Transaction ID", "Name", "Email", "Amount", "Currency", "Method", "Status", "Date"],
-      ...filteredDonations.map(d => [
-        d.id,
-        d.name,
-        d.email,
-        d.amount.toString(),
-        d.currency,
-        d.method,
-        d.status,
-        d.date
-      ])
-    ]
-    .map(e => e.join(","))
-    .join("\n");
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `donations-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
-        return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Completed</Badge>;
-      case "processing":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Processing</Badge>;
-      case "failed":
-        return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">Failed</Badge>;
+      case 'completed':
+        return <span className="flex items-center gap-1 text-green-500"><CheckCircle2 className="h-4 w-4" /> Completed</span>;
+      case 'processing':
+        return <span className="flex items-center gap-1 text-yellow-500"><Clock className="h-4 w-4" /> Processing</span>;
+      case 'failed':
+        return <span className="flex items-center gap-1 text-red-500"><XCircle className="h-4 w-4" /> Failed</span>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <span>{status}</span>;
     }
   };
 
-  const getPaymentMethodDisplay = (method: string) => {
-    switch (method) {
-      case "card":
-        return "Credit/Debit Card";
-      case "paypal":
-        return "PayPal";
-      case "bank_transfer":
-        return "Bank Transfer";
-      case "mobile_money":
-        return "Mobile Money";
-      default:
-        return method;
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'KSH',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+  
+  const getPaymentMethodIcon = (method: string) => {
+    if (method === 'card') {
+      return <CreditCard className="h-4 w-4" />;
     }
+    return null;
   };
 
   return (
     <AdminLayout>
       <div className="p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Donations</h1>
-          <Button
-            onClick={handleExportDonations}
-            className="mt-4 md:mt-0"
-            disabled={loading}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+        <h1 className="text-2xl font-bold mb-6">Donations Management</h1>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Donations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalDonations}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(stats.totalAmount, 'KSH')}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Completed</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.completedDonations}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Processing</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.processingDonations}</div>
+            </CardContent>
+          </Card>
         </div>
-        
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-enf-green" />
+
+        <div className="bg-white dark:bg-gray-800 rounded-md border">
+          <div className="p-4">
+            <h2 className="text-lg font-medium">Donation Records</h2>
           </div>
-        ) : (
-          <>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Total Donations (KSH)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">KSH {totalAmountKSH.toLocaleString()}</div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Total Donations (USD)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">USD {totalAmountUSD.toLocaleString()}</div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Number of Donations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalDonations}</div>
-                </CardContent>
-              </Card>
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-enf-green" />
             </div>
-            
-            <div className="mb-6 space-y-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-grow">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search donors..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <Select value={dateFilter} onValueChange={setDateFilter}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Time period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all_time">All Time</SelectItem>
-                    <SelectItem value="this_month">This Month</SelectItem>
-                    <SelectItem value="this_year">This Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid grid-cols-3 w-full sm:w-[300px]">
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="completed">Completed</TabsTrigger>
-                  <TabsTrigger value="processing">Processing</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Transaction ID</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Program</TableHead>
+                  <TableHead>Donor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {donations.length === 0 ? (
                   <TableRow>
-                    <TableHead>Donor</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableCell colSpan={8} className="text-center py-6">
+                      No donations found
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDonations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
-                        No donations found
+                ) : (
+                  donations.map((donation) => (
+                    <TableRow key={donation.id}>
+                      <TableCell>{format(new Date(donation.date), "MMM d, yyyy")}</TableCell>
+                      <TableCell>{donation.transaction_id || "-"}</TableCell>
+                      <TableCell>{formatCurrency(donation.amount, donation.currency)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {getPaymentMethodIcon(donation.method)}
+                          <span className="capitalize">{donation.method}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{donation.program_name || "General"}</TableCell>
+                      <TableCell>{donation.user_name || "Anonymous"}</TableCell>
+                      <TableCell>{getStatusBadge(donation.status)}</TableCell>
+                      <TableCell>
+                        {processingIds.includes(donation.id) ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : donation.status === 'processing' ? (
+                          <Select 
+                            onValueChange={(value) => 
+                              handleStatusChange(donation.id, value as 'completed' | 'failed')
+                            }
+                          >
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue placeholder="Update" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="completed">Complete</SelectItem>
+                              <SelectItem value="failed">Mark Failed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-sm text-gray-500">-</span>
+                        )}
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredDonations.map((donation) => (
-                      <TableRow key={donation.id}>
-                        <TableCell className="font-medium">{donation.name}</TableCell>
-                        <TableCell>{donation.currency} {donation.amount.toLocaleString()}</TableCell>
-                        <TableCell>{getPaymentMethodDisplay(donation.method)}</TableCell>
-                        <TableCell>{donation.date}</TableCell>
-                        <TableCell>{getStatusBadge(donation.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleViewDetails(donation)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </>
-        )}
-      </div>
-      
-      {/* Donation Details Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle>Donation Details</DialogTitle>
-            <DialogDescription>
-              Complete information about this donation.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedDonation && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="font-medium">Name:</div>
-                <div className="col-span-2">{selectedDonation.name}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="font-medium">Email:</div>
-                <div className="col-span-2">{selectedDonation.email}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="font-medium">Amount:</div>
-                <div className="col-span-2">{selectedDonation.currency} {selectedDonation.amount.toLocaleString()}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="font-medium">Payment Method:</div>
-                <div className="col-span-2">{getPaymentMethodDisplay(selectedDonation.method)}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="font-medium">Date:</div>
-                <div className="col-span-2">{selectedDonation.date}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="font-medium">Status:</div>
-                <div className="col-span-2">{getStatusBadge(selectedDonation.status)}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="font-medium">Transaction ID:</div>
-                <div className="col-span-2">{selectedDonation.id}</div>
-              </div>
-            </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
     </AdminLayout>
   );
 };

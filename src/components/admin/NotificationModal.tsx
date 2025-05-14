@@ -1,8 +1,9 @@
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { Mail, MessageSquare, Send, RefreshCw, Check, X } from "lucide-react";
-
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, CheckCircle2, Users, UserCheck, CreditCard } from "lucide-react";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -11,13 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { NotificationRecipient, EventNotificationData, sendEventEmailNotifications, sendEventSMSNotifications } from "@/services/notificationService";
-import { User, getRegisteredUsers } from "@/services/userService";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  EventNotificationData, 
+  sendEventNotifications,
+  NotificationRecipient 
+} from "@/services/notificationService";
 
 interface NotificationModalProps {
   open: boolean;
@@ -25,234 +32,205 @@ interface NotificationModalProps {
   eventData: EventNotificationData;
 }
 
-const NotificationModal = ({ open, onOpenChange, eventData }: NotificationModalProps) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  const [notificationType, setNotificationType] = useState("email");
-  
-  // Load users when modal opens
-  const loadUsers = async () => {
-    if (open && users.length === 0) {
-      setIsLoadingUsers(true);
-      try {
-        const registeredUsers = await getRegisteredUsers();
-        setUsers(registeredUsers);
-        // Select all users by default
-        setSelectedUserIds(registeredUsers.map(user => user.id));
-      } catch (error) {
-        console.error("Error loading users:", error);
-        toast.error("Failed to load users");
-      } finally {
-        setIsLoadingUsers(false);
-      }
-    }
-  };
-  
-  // Call loadUsers when modal opens
-  useState(() => {
-    if (open) {
-      loadUsers();
-    }
-  });
-  
-  const handleToggleUser = (userId: string) => {
-    setSelectedUserIds(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
-  };
-  
-  const handleToggleAll = () => {
-    if (selectedUserIds.length === users.length) {
-      setSelectedUserIds([]);
-    } else {
-      setSelectedUserIds(users.map(user => user.id));
-    }
-  };
-  
+export default function NotificationModal({
+  open,
+  onOpenChange,
+  eventData,
+}: NotificationModalProps) {
+  const [isSending, setIsSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [recipientType, setRecipientType] = useState<"all" | "volunteers" | "donors" | "custom">("all");
+  const [customMessage, setCustomMessage] = useState("");
+
   const handleSendNotifications = async () => {
-    if (selectedUserIds.length === 0) {
-      toast.warning("Please select at least one recipient");
-      return;
-    }
-    
-    setIsLoading(true);
+    setIsSending(true);
     
     try {
-      // Get selected users
-      const selectedUsers = users.filter(user => selectedUserIds.includes(user.id));
+      const result = await sendEventNotifications(
+        eventData,
+        recipientType,
+      );
       
-      // Map to notification recipients
-      const recipients: NotificationRecipient[] = selectedUsers.map(user => ({
-        email: user.email,
-        name: user.name,
-        phone: user.phone
-      }));
-      
-      let success = false;
-      
-      // Send based on notification type
-      if (notificationType === "email") {
-        success = await sendEventEmailNotifications(recipients, eventData);
-      } else if (notificationType === "sms") {
-        success = await sendEventSMSNotifications(recipients, eventData);
-      } else {
-        // Send both
-        success = await Promise.all([
-          sendEventEmailNotifications(recipients, eventData),
-          sendEventSMSNotifications(recipients, eventData)
-        ]).then(results => results.some(result => result));
-      }
-      
-      if (success) {
-        toast.success(`Notifications sent successfully to ${selectedUserIds.length} recipient(s)`);
-        onOpenChange(false);
+      if (result) {
+        setSuccess(true);
+        setTimeout(() => {
+          onOpenChange(false);
+          setSuccess(false);
+          setCustomMessage("");
+        }, 2000);
       }
     } catch (error) {
-      console.error("Error sending notifications:", error);
-      toast.error("Failed to send notifications");
+      console.error("Error in notification modal:", error);
     } finally {
-      setIsLoading(false);
+      setIsSending(false);
     }
   };
-  
+
+  const resetForm = () => {
+    setSuccess(false);
+    setCustomMessage("");
+    setRecipientType("all");
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!newOpen) {
+          resetForm();
+        }
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Send Event Notifications</DialogTitle>
           <DialogDescription>
-            Send notifications about "{eventData.eventTitle}" to registered users.
+            Notify users about this event. Choose who should receive the notification.
           </DialogDescription>
         </DialogHeader>
-        
-        <Tabs defaultValue="email" onValueChange={setNotificationType}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="email">
-              <Mail className="h-4 w-4 mr-2" /> Email
-            </TabsTrigger>
-            <TabsTrigger value="sms">
-              <MessageSquare className="h-4 w-4 mr-2" /> SMS
-            </TabsTrigger>
-            <TabsTrigger value="both">
-              <Send className="h-4 w-4 mr-2" /> Both
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="email">
-            <p className="text-sm text-muted-foreground mb-4">
-              Send email notifications using the configured SMTP server.
-            </p>
-          </TabsContent>
-          
-          <TabsContent value="sms">
-            <p className="text-sm text-muted-foreground mb-4">
-              Send SMS notifications using Twilio messaging service.
-              <span className="block mt-1 text-xs text-amber-600">
-                Note: Only recipients with phone numbers will receive SMS notifications.
-              </span>
-            </p>
-          </TabsContent>
-          
-          <TabsContent value="both">
-            <p className="text-sm text-muted-foreground mb-4">
-              Send both email and SMS notifications to all selected recipients.
-            </p>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium">Select Recipients</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleToggleAll}
-              className="text-xs h-8"
-            >
-              {selectedUserIds.length === users.length ? "Deselect All" : "Select All"}
-            </Button>
-          </div>
-          
-          <Card>
-            <CardContent className="p-2 max-h-[200px] overflow-y-auto">
-              {isLoadingUsers ? (
-                <div className="flex items-center justify-center p-4">
-                  <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-sm text-muted-foreground">Loading users...</span>
+
+        <div className="flex flex-col gap-6 py-4">
+          {success ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <CheckCircle2 className="mb-2 h-12 w-12 text-green-500" />
+              <h3 className="text-xl font-medium">Notifications Sent!</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Your event notifications have been sent successfully.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="bg-muted p-4 rounded-md">
+                <h3 className="font-medium mb-2">{eventData.eventTitle}</h3>
+                <div className="text-sm text-muted-foreground">
+                  <p>Date: {format(eventData.eventDate, "PPP")}</p>
+                  <p>Time: {eventData.eventTime}</p>
+                  <p>Location: {eventData.eventLocation}</p>
                 </div>
-              ) : users.length === 0 ? (
-                <p className="text-sm text-muted-foreground p-2">No registered users found.</p>
-              ) : (
-                <div className="space-y-2">
-                  {users.map(user => (
-                    <div key={user.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
+              </div>
+
+              <Tabs defaultValue="recipients" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="recipients">Recipients</TabsTrigger>
+                  <TabsTrigger value="preview">Message Preview</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="recipients" className="space-y-4 pt-4">
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-2">
                       <Checkbox 
-                        id={`user-${user.id}`}
-                        checked={selectedUserIds.includes(user.id)}
-                        onCheckedChange={() => handleToggleUser(user.id)}
+                        id="all" 
+                        checked={recipientType === "all"} 
+                        onCheckedChange={() => setRecipientType("all")}
                       />
-                      <div className="grid gap-0.5">
-                        <label 
-                          htmlFor={`user-${user.id}`}
-                          className="text-sm font-medium cursor-pointer"
-                        >
-                          {user.name}
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground flex items-center">
-                            <Mail className="h-3 w-3 mr-1" /> {user.email}
-                          </span>
-                          {user.phone ? (
-                            <span className="text-xs text-muted-foreground flex items-center">
-                              <MessageSquare className="h-3 w-3 mr-1" /> {user.phone}
-                            </span>
-                          ) : notificationType === "sms" ? (
-                            <span className="text-xs text-red-500 flex items-center">
-                              <X className="h-3 w-3 mr-1" /> No phone number
-                            </span>
-                          ) : null}
-                        </div>
+                      <div className="space-y-1 leading-none">
+                        <Label htmlFor="all" className="flex items-center space-x-2">
+                          <Users className="h-4 w-4" />
+                          <span>All Users</span>
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Send to all registered users
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="volunteers" 
+                        checked={recipientType === "volunteers"} 
+                        onCheckedChange={() => setRecipientType("volunteers")}
+                      />
+                      <div className="space-y-1 leading-none">
+                        <Label htmlFor="volunteers" className="flex items-center space-x-2">
+                          <UserCheck className="h-4 w-4" />
+                          <span>Volunteers Only</span>
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Send to approved volunteers
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="donors" 
+                        checked={recipientType === "donors"} 
+                        onCheckedChange={() => setRecipientType("donors")}
+                      />
+                      <div className="space-y-1 leading-none">
+                        <Label htmlFor="donors" className="flex items-center space-x-2">
+                          <CreditCard className="h-4 w-4" />
+                          <span>Donors Only</span>
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Send to users who have donated
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="custom-message">Add custom message (optional)</Label>
+                    <Textarea
+                      id="custom-message"
+                      placeholder="Enter additional information about this event..."
+                      value={customMessage}
+                      onChange={(e) => setCustomMessage(e.target.value)}
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="preview" className="space-y-4 pt-4">
+                  <div className="bg-muted p-4 rounded-md">
+                    <h4 className="font-medium mb-2">Subject: Event: {eventData.eventTitle}</h4>
+                    <div className="text-sm">
+                      <p>Event: {eventData.eventTitle}</p>
+                      <p>Date: {format(eventData.eventDate, "PPP")}</p>
+                      <p>Time: {eventData.eventTime}</p>
+                      <p>Location: {eventData.eventLocation}</p>
+                      <p className="pt-4">{eventData.eventDescription}</p>
+                      {customMessage && (
+                        <p className="pt-2">{customMessage}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-muted-foreground">
+                    This message will be sent to {
+                      recipientType === "all" ? "all users" :
+                      recipientType === "volunteers" ? "all volunteers" :
+                      recipientType === "donors" ? "all donors" :
+                      "selected recipients"
+                    }.
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
         </div>
-        
+
         <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button 
             onClick={handleSendNotifications}
-            disabled={isLoading || selectedUserIds.length === 0}
+            disabled={isSending || success}
           >
-            {isLoading ? (
+            {isSending ? (
               <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Sending...
               </>
+            ) : success ? (
+              "Sent!"
             ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Send Notifications
-              </>
+              "Send Notifications"
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default NotificationModal;
+}
