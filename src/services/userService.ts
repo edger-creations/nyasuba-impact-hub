@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -32,8 +33,10 @@ export const fetchUsers = async (): Promise<User[]> => {
     const { data: authUsers } = await supabase.auth.admin.listUsers();
     
     return data.map(profile => {
-      // Fix: Check if authUsers.users exists and is an array before using find
-      const authUser = authUsers?.users ? authUsers.users.find(u => u.id === profile.id) : undefined;
+      // Fix: Check if authUsers exists and has users array before using find
+      const authUser = authUsers && authUsers.users ? 
+        authUsers.users.find(u => u.id === profile.id) : 
+        undefined;
       
       return {
         id: profile.id,

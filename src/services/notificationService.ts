@@ -73,11 +73,12 @@ export const sendEventNotifications = async (
           .order('date', { ascending: false })
           .limit(100); // Limit to recent donors
           
-        // Extract unique donors - Fix: Access individual items in the array
+        // Extract unique donors - Fix the type error by accessing each item properly
         const uniqueDonors = new Map();
         
         if (data) {
           data.forEach(item => {
+            // Access the profiles object for the current item
             const profile = item.profiles;
             if (profile && !uniqueDonors.has(profile.id)) {
               uniqueDonors.set(profile.id, {
