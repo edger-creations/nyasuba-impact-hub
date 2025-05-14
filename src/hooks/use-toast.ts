@@ -128,20 +128,19 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
-  const id = genId()
-
   const update = (props: ToasterToast) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
-      toast: { ...props, id },
+      toast: props,
     })
   const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
 
+  const id = genId()
+  
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
-      id,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss()
@@ -150,11 +149,44 @@ function toast({ ...props }: Toast) {
   })
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   }
 }
+
+// Add helper functions for common toast types
+toast.success = (message: string) => {
+  return toast({
+    title: "Success",
+    description: message,
+    variant: "default",
+  });
+};
+
+toast.error = (message: string) => {
+  return toast({
+    title: "Error",
+    description: message,
+    variant: "destructive",
+  });
+};
+
+toast.warning = (message: string) => {
+  return toast({
+    title: "Warning",
+    description: message,
+    variant: "default",
+  });
+};
+
+toast.info = (message: string) => {
+  return toast({
+    title: "Info",
+    description: message,
+    variant: "default",
+  });
+};
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)

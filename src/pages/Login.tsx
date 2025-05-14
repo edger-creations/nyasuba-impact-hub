@@ -81,7 +81,10 @@ const Login = () => {
     
     try {
       await login(values.email, values.password, (path) => navigate(path));
-      toast.success("Login successful!");
+      toast({
+        title: "Login successful!",
+        description: "You have been logged in successfully.",
+      });
       // No need to navigate here as login function will do it
     } catch (error: any) {
       toast({
