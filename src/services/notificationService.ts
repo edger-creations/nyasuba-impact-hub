@@ -73,18 +73,21 @@ export const sendEventNotifications = async (
           .order('date', { ascending: false })
           .limit(100); // Limit to recent donors
           
-        // Extract unique donors - FIX: Access item and then properties
+        // Extract unique donors - Fix: Access individual items in the array
         const uniqueDonors = new Map();
-        (data || []).forEach(item => {
-          const profile = item.profiles;
-          if (profile && !uniqueDonors.has(profile.id)) {
-            uniqueDonors.set(profile.id, {
-              id: profile.id,
-              email: profile.email,
-              name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
-            });
-          }
-        });
+        
+        if (data) {
+          data.forEach(item => {
+            const profile = item.profiles;
+            if (profile && !uniqueDonors.has(profile.id)) {
+              uniqueDonors.set(profile.id, {
+                id: profile.id,
+                email: profile.email,
+                name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+              });
+            }
+          });
+        }
         
         recipients = Array.from(uniqueDonors.values());
       } else {
