@@ -79,12 +79,21 @@ export const sendEventNotifications = async (
         if (data) {
           data.forEach(item => {
             // Access the profiles object for the current item
-            if (item.profiles && !uniqueDonors.has(item.profiles.id)) {
-              uniqueDonors.set(item.profiles.id, {
-                id: item.profiles.id,
-                email: item.profiles.email,
-                name: `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim()
-              });
+            if (item.profiles && typeof item.profiles === 'object') {
+              const profile = item.profiles as { 
+                id: string; 
+                email: string; 
+                first_name?: string; 
+                last_name?: string; 
+              };
+              
+              if (!uniqueDonors.has(profile.id)) {
+                uniqueDonors.set(profile.id, {
+                  id: profile.id,
+                  email: profile.email,
+                  name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+                });
+              }
             }
           });
         }

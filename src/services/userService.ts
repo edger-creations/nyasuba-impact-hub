@@ -34,7 +34,7 @@ export const fetchUsers = async (): Promise<User[]> => {
     
     return data.map(profile => {
       // Fix: Check if authUsers exists and has users array before using find
-      const authUser = authUsers && authUsers.users ? 
+      const authUser = authUsers?.users ? 
         authUsers.users.find(u => u.id === profile.id) : 
         undefined;
       
