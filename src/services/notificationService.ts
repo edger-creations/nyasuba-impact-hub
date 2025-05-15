@@ -80,6 +80,7 @@ export const sendEventNotifications = async (
           data.forEach(item => {
             // Access the profiles object for the current item
             if (item.profiles && typeof item.profiles === 'object') {
+              // Handle as object, not array
               const profile = item.profiles as { 
                 id: string; 
                 email: string; 
