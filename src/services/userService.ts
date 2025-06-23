@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -35,7 +34,7 @@ export const fetchUsers = async (): Promise<User[]> => {
     return data.map(profile => {
       // Fix: Check if authUsers exists and has users array before using find
       const authUser = authUsers?.users ? 
-        authUsers.users.find(u => u.id === profile.id) : 
+        authUsers.users.find((u: any) => u.id === profile.id) : 
         undefined;
       
       return {

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -79,7 +78,7 @@ export const sendEventNotifications = async (
         if (data) {
           data.forEach(item => {
             // Access the profiles object for the current item
-            if (item.profiles && typeof item.profiles === 'object') {
+            if (item.profiles && typeof item.profiles === 'object' && !Array.isArray(item.profiles)) {
               // Handle as object, not array
               const profile = item.profiles as { 
                 id: string; 
