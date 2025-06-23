@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -69,30 +68,8 @@ const SignUp = () => {
         passwordLength: formData.password.length
       });
       
-      // Instead of using the AuthContext signup function which expects a navigation handler,
-      // we'll directly use Supabase to sign up and handle navigation ourselves
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.fullName.split(' ')[0],
-            last_name: formData.fullName.split(' ').slice(1).join(' ')
-          },
-          emailRedirectTo: window.location.origin + "/verify-email"
-        }
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Account created!",
-        description: "Please check your email for verification instructions.",
-        variant: "default"
-      });
-      
-      // Navigate to verify email page and pass the email as state
-      navigate("/verify-email", { state: { email: formData.email } });
+      // Use the AuthContext signup function which will handle navigation with email state
+      await signup(formData.fullName, formData.email, formData.password, navigate);
       
     } catch (error: any) {
       console.error("Signup error details:", error);

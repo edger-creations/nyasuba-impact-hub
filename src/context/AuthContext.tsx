@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +17,8 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isRegistered: boolean;
   isVerified: boolean;
-  login: (email: string, password: string, navigate: (path: string) => void) => Promise<void>;
-  signup: (name: string, email: string, password: string, navigate: (path: string) => void) => Promise<void>;
+  login: (email: string, password: string, navigate: (path: string, options?: any) => void) => Promise<void>;
+  signup: (name: string, email: string, password: string, navigate: (path: string, options?: any) => void) => Promise<void>;
   logout: (navigate: (path: string) => void) => void;
   loading: boolean;
   checkVerification: () => Promise<boolean>;
@@ -116,7 +117,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
-  const login = async (email: string, password: string, navigate: (path: string) => void) => {
+  const login = async (email: string, password: string, navigate: (path: string, options?: any) => void) => {
     setLoading(true);
     try {
       // For demo purposes only - allow login with admin account
@@ -152,7 +153,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
           
           // Redirect to verify email page if email is not confirmed
-          navigate("/verify-email");
+          navigate("/verify-email", { state: { email } });
           return;
         }
         
@@ -170,7 +171,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string, navigate: (path: string) => void) => {
+  const signup = async (name: string, email: string, password: string, navigate: (path: string, options?: any) => void) => {
     setLoading(true);
     try {
       console.log("Calling Supabase signUp with email:", email);
@@ -200,7 +201,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           title: "Account Created Successfully!",
           description: "Please check your email for a verification link to complete your registration.",
         });
-        navigate("/verify-email");
+        navigate("/verify-email", { state: { email } });
       } else {
         console.error("No user data returned from signup");
         throw new Error("Failed to create account. Please try again.");
