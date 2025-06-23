@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -201,7 +200,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           title: "Account Created Successfully!",
           description: "Please check your email for a verification link to complete your registration.",
         });
-        navigate("/verify-email", { state: { email } });
+        navigate("/verify-email");
       } else {
         console.error("No user data returned from signup");
         throw new Error("Failed to create account. Please try again.");
