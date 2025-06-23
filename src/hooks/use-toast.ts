@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import {
   Toast,
@@ -8,7 +7,7 @@ import {
 
 const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 1000000
-const TOAST_AUTO_DISMISS_DELAY = 5000 // Auto dismiss after 5 seconds
+const TOAST_AUTO_DISMISS_DELAY = 3000 // Auto dismiss after 3 seconds
 
 type ToasterToast = ToastProps & {
   id: string
@@ -130,14 +129,21 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
+  const id = genId()
+  
   const update = (props: ToasterToast) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
       toast: props,
     })
-  const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
-
-  const id = genId()
+  const dismiss = () => {
+    // Clear any existing dismiss timeout when manually dismissing
+    if (dismissTimeouts.has(id)) {
+      clearTimeout(dismissTimeouts.get(id))
+      dismissTimeouts.delete(id)
+    }
+    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+  }
   
   dispatch({
     type: actionTypes.ADD_TOAST,
@@ -150,11 +156,12 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  // Auto-dismiss toast after delay unless it's persistent
-  if (!props.duration || props.duration > 0) {
+  // Auto-dismiss toast after 3 seconds unless duration is explicitly set to 0 or negative
+  const duration = props.duration !== undefined ? props.duration : TOAST_AUTO_DISMISS_DELAY
+  if (duration > 0) {
     const dismissTimeout = setTimeout(() => {
       dismiss()
-    }, props.duration || TOAST_AUTO_DISMISS_DELAY)
+    }, duration)
     
     dismissTimeouts.set(id, dismissTimeout)
   }
