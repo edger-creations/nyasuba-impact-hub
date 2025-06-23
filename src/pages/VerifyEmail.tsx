@@ -10,9 +10,8 @@ import { Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const VerifyEmail = () => {
-  const { user, isVerified, resendVerificationEmail, checkVerification } = useAuth();
+  const { user, isVerified, checkVerification } = useAuth();
   const [resending, setResending] = useState(false);
-  const [verificationChecked, setVerificationChecked] = useState(false);
   const [email, setEmail] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
@@ -40,35 +39,45 @@ const VerifyEmail = () => {
           const token = params.get('access_token');
           
           if (type === 'signup' && token) {
-            // Set the auth token from the URL to confirm the email
+            // Get the refresh token as well
+            const refreshToken = params.get('refresh_token');
+            
+            // Set the auth session from the URL tokens
             const { error } = await supabase.auth.setSession({
               access_token: token,
-              refresh_token: '',
+              refresh_token: refreshToken || '',
             });
             
             if (error) {
               console.error('Error setting session:', error);
               toast({
-                title: "Verification failed",
+                title: "Verification Error",
                 description: "There was an issue verifying your email. Please try again.",
                 variant: "destructive"
               });
             } else {
               // Email confirmed successfully
               toast({
-                title: "Email verified successfully!",
-                description: "Please log in with your credentials to continue.",
-                variant: "default"
+                title: "Email Verified!",
+                description: "Your email has been verified successfully. Redirecting to login...",
               });
+              
+              // Clear the URL hash
+              window.history.replaceState({}, document.title, window.location.pathname);
               
               // Redirect to login after a short delay
               setTimeout(() => {
-                navigate('/login');
+                navigate('/login?email_verified=true');
               }, 2000);
             }
           }
         } catch (error) {
           console.error('Error handling email confirmation:', error);
+          toast({
+            title: "Verification Error", 
+            description: "There was an issue processing your email verification.",
+            variant: "destructive"
+          });
         }
       }
     };
@@ -81,22 +90,17 @@ const VerifyEmail = () => {
     // Check verification status on component mount
     if (user && !isVerified) {
       checkVerification().then(verified => {
-        setVerificationChecked(true);
-        
         if (verified) {
           toast({
-            title: "Email verified successfully!",
-            description: "Please log in to continue.",
-            variant: "default"
+            title: "Email Verified!",
+            description: "Your email has been verified successfully.",
           });
           
           setTimeout(() => {
-            navigate("/login");
+            navigate("/login?email_verified=true");
           }, 3000);
         }
       });
-    } else {
-      setVerificationChecked(true);
     }
     
     // Set up interval to check verification status
@@ -130,7 +134,7 @@ const VerifyEmail = () => {
         type: 'signup',
         email: email,
         options: {
-          emailRedirectTo: window.location.origin + "/verify-email"
+          emailRedirectTo: `${window.location.origin}/verify-email`
         }
       });
       
@@ -143,9 +147,8 @@ const VerifyEmail = () => {
         });
       } else {
         toast({
-          title: "Email sent",
+          title: "Email Sent",
           description: "A new verification email has been sent to your inbox.",
-          variant: "default"
         });
       }
     } catch (error) {
@@ -176,11 +179,11 @@ const VerifyEmail = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <p>You will be redirected to the login page in a moment.</p>
+              <p>You can now access all features of the application.</p>
             </CardContent>
             <CardFooter className="flex justify-center">
-              <Button onClick={() => navigate("/login")}>
-                Go to Login
+              <Button onClick={() => navigate("/")} className="bg-enf-green hover:bg-enf-dark-green">
+                Continue to App
               </Button>
             </CardFooter>
           </Card>
@@ -200,17 +203,22 @@ const VerifyEmail = () => {
             </div>
             <CardTitle className="text-center">Verify Your Email</CardTitle>
             <CardDescription className="text-center">
-              Please verify your email address to access all features.
+              Please verify your email address to complete your registration.
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center">
-            <p className="mb-4">
+          <CardContent className="text-center space-y-4">
+            <p>
               We've sent a verification link to <strong>{email}</strong>.
-              Check your inbox and click the link to verify your account.
             </p>
             <p className="text-sm text-gray-500">
-              Didn't receive the email? Check your spam folder or request a new verification link.
+              Please check your inbox (and spam folder) and click the verification link to activate your account.
             </p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">Didn't receive the email?</span>
+              </div>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button 

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { 
   CheckCircle2, 
@@ -67,7 +67,11 @@ const UsersAdmin = () => {
         });
       } catch (error) {
         console.error("Error loading users:", error);
-        toast.error("Failed to load users data. Please try again.");
+        toast({
+          title: "Error",
+          description: "Failed to load users data. Please try again.",
+          variant: "destructive"
+        });
       } finally {
         setLoading(false);
       }

@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export interface EventNotificationData {
   eventTitle: string;
@@ -149,11 +150,18 @@ export const sendEventNotifications = async (
     
     if (error) throw error;
     
-    toast.success(`Notifications sent to ${recipients.length} recipients`);
+    toast({
+      title: "Success",
+      description: `Notifications sent to ${recipients.length} recipients`
+    });
     return true;
   } catch (error) {
     console.error("Error sending notifications:", error);
-    toast.error("Failed to send notifications. Please try again.");
+    toast({
+      title: "Error",
+      description: "Failed to send notifications. Please try again.",
+      variant: "destructive"
+    });
     return false;
   }
 };
@@ -173,7 +181,11 @@ export const getNotificationHistory = async (): Promise<any[]> => {
     return data || [];
   } catch (error) {
     console.error("Error fetching notification history:", error);
-    toast.error("Failed to load notification history. Please try again.");
+    toast({
+      title: "Error", 
+      description: "Failed to load notification history. Please try again.",
+      variant: "destructive"
+    });
     return [];
   }
 };

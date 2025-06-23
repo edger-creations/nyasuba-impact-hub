@@ -148,8 +148,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Check if verification is needed
         if (!data.user.email_confirmed_at) {
           toast({
-            title: "Warning",
-            description: "Please verify your email to access all features",
+            title: "Email Verification Required",
+            description: "Please check your email and click the verification link to complete your account setup.",
             variant: "default"
           });
           
@@ -158,6 +158,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
         
+        toast({
+          title: "Success", 
+          description: "Successfully logged in!"
+        });
         navigate("/");
       }
     } catch (error: any) {
@@ -182,7 +186,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             first_name: name.split(' ')[0],
             last_name: name.split(' ').slice(1).join(' ')
           },
-          emailRedirectTo: window.location.origin + "/verify-email" // Set redirect URL for email verification
+          emailRedirectTo: `${window.location.origin}/login?email_verified=true`
         }
       });
       
@@ -194,29 +198,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (data.user) {
-        // Always redirect to verify-email page after signup
-        // We don't check email_confirmed_at here because it will always be null on signup
         toast({
-          title: "Account created!",
-          description: "Please check your email for verification instructions.",
+          title: "Account Created Successfully!",
+          description: "Please check your email for a verification link to complete your registration.",
           variant: "default"
         });
-        navigate("/verify-email");
+        navigate("/verify-email", { state: { email } });
       } else {
         console.error("No user data returned from signup");
         throw new Error("Failed to create account. Please try again.");
       }
     } catch (error: any) {
       console.error("Detailed signup error:", error);
-      
-      // Format the error message
-      if (typeof error === 'object') {
-        console.error("Error properties:", Object.keys(error));
-        console.error("Error message:", error.message);
-        console.error("Error code:", error.code);
-        console.error("Error status:", error.status);
-      }
-      
       throw error;
     } finally {
       setLoading(false);
@@ -228,6 +221,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem("enf-user");
+      toast({
+        title: "Success",
+        description: "Successfully logged out"
+      });
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -269,20 +266,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         type: 'signup',
         email: user.email,
         options: {
-          emailRedirectTo: window.location.origin + "/verify-email"
+          emailRedirectTo: `${window.location.origin}/login?email_verified=true`
         }
       });
       
       if (error) throw error;
       
       toast({
-        title: "Success",
+        title: "Email Sent",
         description: "Verification email sent! Please check your inbox.",
         variant: "default"
       });
       return true;
     } catch (error) {
       console.error("Error resending verification:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send verification email. Please try again.",
+        variant: "destructive"
+      });
       return false;
     }
   };

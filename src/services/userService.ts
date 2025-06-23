@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export interface User {
   id: string;
@@ -69,7 +70,11 @@ export const fetchUsers = async (): Promise<User[]> => {
       }));
     } catch (fallbackError) {
       console.error("Fallback error fetching users:", fallbackError);
-      toast.error("Failed to load users. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to load users. Please try again.",
+        variant: "destructive"
+      });
       return [];
     }
   }
@@ -89,11 +94,18 @@ export const updateUserVerificationStatus = async (userId: string, isVerified: b
       throw error;
     }
     
-    toast.success(`User ${isVerified ? 'verified' : 'unverified'} successfully`);
+    toast({
+      title: "Success",
+      description: `User ${isVerified ? 'verified' : 'unverified'} successfully`
+    });
     return true;
   } catch (error) {
     console.error("Error updating user verification status:", error);
-    toast.error("Failed to update user verification status. Please try again.");
+    toast({
+      title: "Error",
+      description: "Failed to update user verification status. Please try again.",
+      variant: "destructive"
+    });
     return false;
   }
 };
