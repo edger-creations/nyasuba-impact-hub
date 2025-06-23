@@ -150,7 +150,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           toast({
             title: "Email Verification Required",
             description: "Please check your email and click the verification link to complete your account setup.",
-            variant: "default"
           });
           
           // Redirect to verify email page if email is not confirmed
@@ -186,7 +185,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             first_name: name.split(' ')[0],
             last_name: name.split(' ').slice(1).join(' ')
           },
-          emailRedirectTo: `${window.location.origin}/login?email_verified=true`
+          emailRedirectTo: `${window.location.origin}/verify-email`
         }
       });
       
@@ -201,7 +200,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         toast({
           title: "Account Created Successfully!",
           description: "Please check your email for a verification link to complete your registration.",
-          variant: "default"
         });
         navigate("/verify-email", { state: { email } });
       } else {
@@ -266,7 +264,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         type: 'signup',
         email: user.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/login?email_verified=true`
+          emailRedirectTo: `${window.location.origin}/verify-email`
         }
       });
       
@@ -275,7 +273,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       toast({
         title: "Email Sent",
         description: "Verification email sent! Please check your inbox.",
-        variant: "default"
       });
       return true;
     } catch (error) {
