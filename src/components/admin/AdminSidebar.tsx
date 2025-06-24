@@ -1,4 +1,3 @@
-
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,8 +10,9 @@ const AdminSidebar = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
+  // Handle logout correctly - removed navigate parameter
   const handleLogout = () => {
-    logout(navigate);
+    logout();
   };
 
   const menuItems = [

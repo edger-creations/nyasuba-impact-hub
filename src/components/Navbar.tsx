@@ -67,9 +67,9 @@ const Navbar = ({ minimal = false }: NavbarProps) => {
     return true;
   };
 
-  // Handle logout correctly
+  // Handle logout correctly - removed navigate parameter
   const handleLogout = () => {
-    logout(navigate);
+    logout();
   };
 
   return (
