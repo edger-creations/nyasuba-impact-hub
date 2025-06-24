@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import {
   Toast,
@@ -6,8 +7,8 @@ import {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
-const TOAST_REMOVE_DELAY = 1000000
-const TOAST_AUTO_DISMISS_DELAY = 3000 // Auto dismiss after 3 seconds
+const TOAST_REMOVE_DELAY = 1000
+const TOAST_AUTO_DISMISS_DELAY = 3000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -55,7 +56,6 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -79,8 +79,6 @@ const reducer = (state: State, action: Action): State => {
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -136,12 +134,8 @@ function toast({ ...props }: Toast) {
       type: actionTypes.UPDATE_TOAST,
       toast: props,
     })
+  
   const dismiss = () => {
-    // Clear any existing dismiss timeout when manually dismissing
-    if (dismissTimeouts.has(id)) {
-      clearTimeout(dismissTimeouts.get(id))
-      dismissTimeouts.delete(id)
-    }
     dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
   }
   
@@ -156,14 +150,12 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  // Auto-dismiss toast after 3 seconds unless duration is explicitly set to 0 or negative
+  // Auto-dismiss after 3 seconds unless duration is set to 0
   const duration = props.duration !== undefined ? props.duration : TOAST_AUTO_DISMISS_DELAY
   if (duration > 0) {
-    const dismissTimeout = setTimeout(() => {
+    setTimeout(() => {
       dismiss()
     }, duration)
-    
-    dismissTimeouts.set(id, dismissTimeout)
   }
 
   return {
@@ -173,7 +165,7 @@ function toast({ ...props }: Toast) {
   }
 }
 
-// Add helper functions for common toast types
+// Helper functions for common toast types
 toast.success = (message: string) => {
   return toast({
     title: "Success",
@@ -229,12 +221,6 @@ function useToast() {
 function addToRemoveQueue(toastId: string) {
   if (toastTimeouts.has(toastId)) {
     return
-  }
-
-  // Clear any existing dismiss timeout
-  if (dismissTimeouts.has(toastId)) {
-    clearTimeout(dismissTimeouts.get(toastId))
-    dismissTimeouts.delete(toastId)
   }
 
   const timeout = setTimeout(() => {

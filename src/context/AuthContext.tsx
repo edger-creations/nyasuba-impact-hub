@@ -157,10 +157,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
         
-        toast({
-          title: "Success", 
-          description: "Successfully logged in!"
-        });
+        toast.success("Successfully logged in!");
         navigate("/");
       }
     } catch (error: any) {
@@ -197,10 +194,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
       
       if (data.user) {
-        toast({
-          title: "Account Created Successfully!",
-          description: "Please check your email for a verification link to complete your registration.",
-        });
+        toast.success("Account created successfully! Please check your email for verification.");
         navigate("/verify-email", { state: { email } });
       } else {
         console.error("No user data returned from signup");
@@ -219,18 +213,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem("enf-user");
-      toast({
-        title: "Success",
-        description: "Successfully logged out"
-      });
+      toast.success("Successfully logged out");
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to log out"
-      });
+      toast.error("Failed to log out");
     }
   };
 
@@ -270,18 +257,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (error) throw error;
       
-      toast({
-        title: "Email Sent",
-        description: "Verification email sent! Please check your inbox.",
-      });
+      toast.success("Verification email sent! Please check your inbox.");
       return true;
     } catch (error) {
       console.error("Error resending verification:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send verification email. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to send verification email. Please try again.");
       return false;
     }
   };
