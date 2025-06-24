@@ -150,12 +150,10 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  // Auto-dismiss after 3 seconds unless duration is set to 0
+  // Auto-dismiss after 3 seconds
   const duration = props.duration !== undefined ? props.duration : TOAST_AUTO_DISMISS_DELAY
   if (duration > 0) {
-    setTimeout(() => {
-      dismiss()
-    }, duration)
+    setTimeout(dismiss, duration)
   }
 
   return {

@@ -4,7 +4,6 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -20,53 +19,39 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle } from "lucide-react";
 
-// Login form schema
 const loginFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
+  password: z.string().min(1, { message: "Password is required." }),
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showVerifiedMessage, setShowVerifiedMessage] = useState(false);
-  const [showResetSuccessMessage, setShowResetSuccessMessage] = useState(false);
   
-  // Check for various query parameters
+  // Redirect if already authenticated
   useEffect(() => {
-    // Check URL parameters
+    if (isAuthenticated && !loading) {
+      navigate("/");
+    }
+  }, [isAuthenticated, loading, navigate]);
+  
+  // Check for verification success message
+  useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    
-    // Check for email verification success
     const emailVerified = searchParams.get("email_verified");
+    
     if (emailVerified === "true") {
       setShowVerifiedMessage(true);
-    }
-    
-    // Check for password reset success
-    const resetSuccess = searchParams.get("resetSuccess");
-    if (resetSuccess === "true") {
-      setShowResetSuccessMessage(true);
-      toast({
-        title: "Password updated",
-        description: "Your password has been successfully reset. You can now log in with your new password.",
-      });
-    }
-    
-    // Remove query parameters from URL for cleanliness
-    if (emailVerified || resetSuccess) {
+      // Clean up URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
   }, [location]);
-  
-  // Get redirect URL from query params if present
-  const searchParams = new URLSearchParams(location.search);
-  const redirectUrl = searchParams.get("redirect") || "/";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -77,26 +62,30 @@ const Login = () => {
   });
 
   const onSubmit = async (values: LoginFormValues) => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     
     try {
-      await login(values.email, values.password, (path) => navigate(path));
-      toast({
-        title: "Login successful!",
-        description: "You have been logged in successfully.",
-      });
-      // No need to navigate here as login function will do it
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+      await login(values.email, values.password);
+      // Navigation will be handled by the auth state change
+    } catch (error) {
+      // Error handling is done in the login function
       console.error("Login error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-enf-green"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -113,16 +102,7 @@ const Login = () => {
             <Alert className="mb-6 bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300">
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                Your email has been verified successfully! You can now log in with your credentials.
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {showResetSuccessMessage && (
-            <Alert className="mb-6 bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300">
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                Your password has been reset successfully! You can now log in with your new password.
+                Your email has been verified successfully! You can now log in.
               </AlertDescription>
             </Alert>
           )}

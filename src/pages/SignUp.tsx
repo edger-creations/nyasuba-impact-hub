@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -6,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
 
 const SignUp = () => {
-  const { signup } = useAuth();
+  const { signup, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
@@ -22,6 +21,45 @@ const SignUp = () => {
     agreeTerms: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && !loading) {
+      navigate("/");
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.fullName.trim()) {
+      errors.fullName = "Full name is required";
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (!formData.password) {
+      errors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      errors.password = "Password must be at least 6 characters long";
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    if (!formData.agreeTerms) {
+      errors.agreeTerms = "You must agree to the terms and conditions";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,6 +67,14 @@ const SignUp = () => {
       ...prev,
       [name]: value,
     }));
+    
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
   };
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -36,67 +82,44 @@ const SignUp = () => {
       ...prev,
       agreeTerms: checked,
     }));
+    
+    if (formErrors.agreeTerms) {
+      setFormErrors(prev => ({
+        ...prev,
+        agreeTerms: ""
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password Error",
-        description: "Passwords do not match. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.agreeTerms) {
-      toast({
-        title: "Terms Error",
-        description: "Please agree to the terms and conditions.",
-        variant: "destructive",
-      });
+    if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      console.log("Starting signup process with:", { 
-        name: formData.fullName, 
-        email: formData.email,
-        passwordLength: formData.password.length
-      });
-      
-      // Use the AuthContext signup function which will handle navigation with email state
-      await signup(formData.fullName, formData.email, formData.password, navigate);
-      
-    } catch (error: any) {
-      console.error("Signup error details:", error);
-      
-      // More detailed error handling
-      let errorMessage = "Registration failed. Please try again.";
-      
-      if (error?.message) {
-        errorMessage = error.message;
-      }
-      
-      // Check for specific Supabase errors
-      if (error?.code === "23505") {
-        errorMessage = "This email is already registered. Please use another email or login.";
-      } else if (error?.code === "auth-email-rate-limit-exceeded") {
-        errorMessage = "Too many signup attempts. Please try again later.";
-      }
-      
-      toast({
-        title: "Registration Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      await signup(formData.fullName, formData.email, formData.password);
+      navigate("/verify-email", { state: { email: formData.email } });
+    } catch (error) {
+      // Error handling is done in the signup function
+      console.error("Signup error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-enf-green"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout showFooter={false}>
@@ -108,7 +131,7 @@ const SignUp = () => {
             <Alert className="mb-6 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                After signing up, you'll need to verify your email address to access all features.
+                After signing up, you'll need to verify your email address to complete registration.
               </AlertDescription>
             </Alert>
 
@@ -120,12 +143,15 @@ const SignUp = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  required
+                  className={formErrors.fullName ? "border-red-500" : ""}
                 />
+                {formErrors.fullName && (
+                  <p className="text-sm text-red-500">{formErrors.fullName}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Your Email</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
                   name="email"
@@ -133,8 +159,11 @@ const SignUp = () => {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  required
+                  className={formErrors.email ? "border-red-500" : ""}
                 />
+                {formErrors.email && (
+                  <p className="text-sm text-red-500">{formErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -146,8 +175,11 @@ const SignUp = () => {
                   autoComplete="new-password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  required
+                  className={formErrors.password ? "border-red-500" : ""}
                 />
+                {formErrors.password && (
+                  <p className="text-sm text-red-500">{formErrors.password}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -159,20 +191,27 @@ const SignUp = () => {
                   autoComplete="new-password"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  required
+                  className={formErrors.confirmPassword ? "border-red-500" : ""}
                 />
+                {formErrors.confirmPassword && (
+                  <p className="text-sm text-red-500">{formErrors.confirmPassword}</p>
+                )}
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="agreeTerms" 
-                  checked={formData.agreeTerms}
-                  onCheckedChange={handleCheckboxChange}
-                  required
-                />
-                <Label htmlFor="agreeTerms" className="text-sm">
-                  I agree to the terms and conditions
-                </Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="agreeTerms" 
+                    checked={formData.agreeTerms}
+                    onCheckedChange={handleCheckboxChange}
+                  />
+                  <Label htmlFor="agreeTerms" className="text-sm">
+                    I agree to the terms and conditions
+                  </Label>
+                </div>
+                {formErrors.agreeTerms && (
+                  <p className="text-sm text-red-500">{formErrors.agreeTerms}</p>
+                )}
               </div>
 
               <Button 

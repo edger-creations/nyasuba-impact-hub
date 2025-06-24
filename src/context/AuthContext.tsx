@@ -2,8 +2,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from "@supabase/supabase-js";
 
-type User = {
+type AuthUser = {
   id: string;
   name: string;
   email: string;
@@ -13,13 +14,14 @@ type User = {
 };
 
 type AuthContextType = {
-  user: User | null;
+  user: AuthUser | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isRegistered: boolean;
   isVerified: boolean;
-  login: (email: string, password: string, navigate: (path: string, options?: any) => void) => Promise<void>;
-  signup: (name: string, email: string, password: string, navigate: (path: string, options?: any) => void) => Promise<void>;
-  logout: (navigate: (path: string) => void) => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
   loading: boolean;
   checkVerification: () => Promise<boolean>;
   resendVerificationEmail: () => Promise<boolean>;
@@ -32,97 +34,92 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Initialize auth state
   useEffect(() => {
-    // Check for existing session on load
-    const checkSession = async () => {
-      setLoading(true);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Get user data if session exists
-        const { data: { user: authUser } } = await supabase.auth.getUser();
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
         
-        if (authUser) {
-          // Get additional profile data if needed
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
-            
-          // Set the user in state
-          setUser({
-            id: authUser.id,
-            email: authUser.email || '',
-            name: profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : (authUser.email || '').split('@')[0],
-            isRegistered: true,
-            isVerified: authUser.email_confirmed_at !== null,
-            isAdmin: profile?.is_verified || false
-          });
+        if (mounted) {
+          setSession(initialSession);
+          if (initialSession?.user) {
+            await updateUserFromSession(initialSession);
+          }
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        if (mounted) {
+          setLoading(false);
         }
       }
-      
-      setLoading(false);
     };
-    
-    checkSession();
-    
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event);
-      
-      if (event === 'SIGNED_IN' && session) {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event);
         
-        if (authUser) {
-          // Get additional profile data if needed
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
-            
-          // Set the user in state
-          setUser({
-            id: authUser.id,
-            email: authUser.email || '',
-            name: profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}` : (authUser.email || '').split('@')[0],
-            isRegistered: true,
-            isVerified: authUser.email_confirmed_at !== null,
-            isAdmin: profile?.is_verified || false
-          });
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-      } else if (event === 'USER_UPDATED') {
-        // If the user was updated (e.g., email verified), refresh the user data
-        if (session) {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
-          if (authUser && user) {
-            setUser({
-              ...user,
-              isVerified: authUser.email_confirmed_at !== null
-            });
+        if (mounted) {
+          setSession(session);
+          
+          if (session?.user) {
+            await updateUserFromSession(session);
+          } else {
+            setUser(null);
           }
         }
       }
-    });
-    
+    );
+
+    initializeAuth();
+
     return () => {
-      subscription?.unsubscribe();
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
-  const login = async (email: string, password: string, navigate: (path: string, options?: any) => void) => {
-    setLoading(true);
+  const updateUserFromSession = async (session: Session) => {
     try {
-      // For demo purposes only - allow login with admin account
+      const authUser = session.user;
+      
+      // Get profile data
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      const userData: AuthUser = {
+        id: authUser.id,
+        email: authUser.email || '',
+        name: profile?.first_name 
+          ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+          : (authUser.email || '').split('@')[0],
+        isRegistered: true,
+        isVerified: authUser.email_confirmed_at !== null,
+        isAdmin: profile?.is_verified || false
+      };
+
+      setUser(userData);
+    } catch (error) {
+      console.error("Error updating user from session:", error);
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      // Handle demo admin account
       if (email === "admin@esthernyasubafoundation.org" && password === "Elly@12345@2024#") {
-        const mockUser: User = {
+        const mockUser: AuthUser = {
           id: "admin-123",
           name: "Administrator",
           email,
@@ -133,47 +130,50 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         setUser(mockUser);
         localStorage.setItem("enf-user", JSON.stringify(mockUser));
-        navigate("/admin/dashboard");
+        toast.success("Successfully logged in as administrator!");
         return;
       }
       
       // Real Supabase authentication
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
       
       if (error) {
         throw error;
       }
       
       if (data.user) {
-        // Check if verification is needed
         if (!data.user.email_confirmed_at) {
-          toast({
-            title: "Email Verification Required",
-            description: "Please check your email and click the verification link to complete your account setup.",
-          });
-          
-          // Redirect to verify email page if email is not confirmed
-          navigate("/verify-email", { state: { email } });
-          return;
+          toast.error("Please verify your email address before logging in. Check your inbox for a verification link.");
+          throw new Error("Email not verified");
         }
         
         toast.success("Successfully logged in!");
-        navigate("/");
       }
     } catch (error: any) {
       console.error("Login failed:", error);
+      
+      let errorMessage = "Login failed. Please try again.";
+      
+      if (error.message?.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please check your credentials.";
+      } else if (error.message?.includes("Email not verified")) {
+        errorMessage = "Please verify your email address before logging in.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const signup = async (name: string, email: string, password: string, navigate: (path: string, options?: any) => void) => {
-    setLoading(true);
+  const signup = async (name: string, email: string, password: string) => {
     try {
-      console.log("Calling Supabase signUp with email:", email);
+      console.log("Starting signup process for:", email);
       
-      // Sign up with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -186,35 +186,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
       
-      console.log("Supabase signup response:", { data, error });
-      
       if (error) {
-        console.error("Signup error from Supabase:", error);
         throw error;
       }
       
       if (data.user) {
-        toast.success("Account created successfully! Please check your email for verification.");
-        navigate("/verify-email", { state: { email } });
+        toast.success("Account created successfully! Please check your email for a verification link.");
       } else {
-        console.error("No user data returned from signup");
         throw new Error("Failed to create account. Please try again.");
       }
     } catch (error: any) {
-      console.error("Detailed signup error:", error);
+      console.error("Signup error:", error);
+      
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (error?.message?.includes("already registered")) {
+        errorMessage = "This email is already registered. Please use a different email or try logging in.";
+      } else if (error?.message?.includes("Password")) {
+        errorMessage = "Password must be at least 6 characters long.";
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const logout = async (navigate: (path: string) => void) => {
+  const logout = async () => {
     try {
       await supabase.auth.signOut();
       setUser(null);
+      setSession(null);
       localStorage.removeItem("enf-user");
       toast.success("Successfully logged out");
-      navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
@@ -224,7 +229,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const checkVerification = async (): Promise<boolean> => {
     if (!user) return false;
     
-    // For demo admin account
+    // Demo admin is always verified
     if (user.isAdmin) return true;
     
     try {
@@ -232,8 +237,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const verified = authUser?.email_confirmed_at !== null;
       
       if (verified !== user.isVerified) {
-        const updatedUser = { ...user, isVerified: verified };
-        setUser(updatedUser);
+        setUser(prev => prev ? { ...prev, isVerified: verified } : null);
       }
       
       return verified || false;
@@ -268,6 +272,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const contextValue: AuthContextType = {
     user,
+    session,
     isAuthenticated: !!user,
     isRegistered: user?.isRegistered || false,
     isVerified: user?.isVerified || false,
